@@ -1,0 +1,923 @@
+{
+ "settings": {
+  "total_weeks": 12,
+  "copies_per_title": 2,
+  "rate_packaging": 30000,
+  "rate_platform": 40000,
+  "rate_onboarding": 500000,
+  "qty_onboarding": 1,
+  "rate_pilot": 7500000,
+  "rate_report": 5000000,
+  "rate_other": 0
+ },
+ "books": [
+  {
+   "title": "Sigmund Freud",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Samuel Morse",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "R.A Kartini",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Revolusi Perancis",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Puteri Remaja",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Perang dan Damai",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Jane Eyre",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Max Havelar",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Ivan Pavlov",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Iskandar Zulkarnain",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Carl Jung",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Erich Fromm",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Asal-Usul Perang Dunia 2",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Asal-Usul Perang Dunia 1",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Abraham Maslow",
+   "level": "Mahir",
+   "price": 15000,
+   "source": "E"
+  },
+  {
+   "title": "Soekarno Hatta",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Pengeboman Hiroshima dan Nagasaki",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Socrates",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Nikola Tesla",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Oppenheimer",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Nelson Mandela",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Markus Aurelius",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Ludwig van Beethoven",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Keluarga Karamazov",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Kisah Hamka",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Keangkuhan dan Prasangka - Pride and Prejudice",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Johannes Kepler",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "DEWI SARTIKA",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Cinta dan Dengki - Wuthering Heights",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Alfred Nobel",
+   "level": "Mahir",
+   "price": 20000,
+   "source": "E"
+  },
+  {
+   "title": "Tom Sawyer 2",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Marie Curie 2",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Romeo & Juliet",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Layar Terkembang",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Khalid bin Walid",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Kisah Dua Kota",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Huckleberry Finn",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Isaac Newton",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Galileo Galilei",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Azab dan Sengsara",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Christopher Colombus",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Al-Khawarizmi",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Albert Einstein",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Alexander Graham Bell",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Abu Nawas Si Cerdik yang Selalu Beruntung",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Steve Jobs",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Vincent van Gogh",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Ki Hajar Dewantara",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Leonardo Da Vinci",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Keliling Dunia dalam 80 Hari",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Jendral Sudirman",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Harapan Besar Kisah Pip",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Ibnu Sina",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Ernest Swinton",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Charlie Chaplin",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Boedi Oetomo 2",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "BJ Habibie",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Archimedes",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Anak Perawan di Sarang Penyamun",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Agus Salim",
+   "level": "Madya",
+   "price": 20000,
+   "source": "D"
+  },
+  {
+   "title": "Legenda Selat Bali",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Timun Mas",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Pippi Longstocking",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Roro Jongrang",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Pinokio",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Pak Lebai yang Malang",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Peter si Kelinci",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Mary Poppins",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Louis Pasteur, Si Pemerhati yang Penuh",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Legenda Situ Bagendit",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Karl dan Mesin Ajaib",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Legenda Si Pitung",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Jejak Sang Kapten",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Hikayat Hang Tuah",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Florence Nightingale",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Gajah Mada",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Buku Hutan",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Danau Toba",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Asal-Usul Kota Salatiga",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Bawang Merah dan Bawang Putih",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Anne dari Green Gable",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Amelia Earhart Sayap-Sayap Keberanian",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Anak Itik yang Buruk Rupa",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Aladdin",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Alibaba",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Aji Saka Asal-Usul Hanacaraka",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "C"
+  },
+  {
+   "title": "Si Teko Ratu Porselen yang Sombong",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Telaga Warna",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Rumah Kecil",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Malin Kundang",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Pangeran Kecil",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Keong Mas",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Kucing Bersepatu Bot",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "La Dana dan Kerbaunya",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Jack dan Kacang Ajaib",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Joko Kendil",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Gadis Penjual Korek Api",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Goldilocks dan Tiga Beruang",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Cipto Mangunkusumo, Dokter yang Baik",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Gadis Berkerudung Merah",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  },
+  {
+   "title": "Angsa & Telur Emas",
+   "level": "Pemula",
+   "price": 20000,
+   "source": "B3"
+  }
+ ],
+ "students": [
+  {
+   "no": 1,
+   "name": "Anak 1",
+   "level": "Pemula"
+  },
+  {
+   "no": 2,
+   "name": "Anak 2",
+   "level": "Pemula"
+  },
+  {
+   "no": 3,
+   "name": "Anak 3",
+   "level": "Pemula"
+  },
+  {
+   "no": 4,
+   "name": "Anak 4",
+   "level": "Pemula"
+  },
+  {
+   "no": 5,
+   "name": "Anak 5",
+   "level": "Pemula"
+  },
+  {
+   "no": 6,
+   "name": "Anak 6",
+   "level": "Pemula"
+  },
+  {
+   "no": 7,
+   "name": "Anak 7",
+   "level": "Pemula"
+  },
+  {
+   "no": 8,
+   "name": "Anak 8",
+   "level": "Pemula"
+  },
+  {
+   "no": 9,
+   "name": "Anak 9",
+   "level": "Pemula"
+  },
+  {
+   "no": 10,
+   "name": "Anak 10",
+   "level": "Pemula"
+  },
+  {
+   "no": 11,
+   "name": "Anak 11",
+   "level": "Pemula"
+  },
+  {
+   "no": 12,
+   "name": "Anak 12",
+   "level": "Pemula"
+  },
+  {
+   "no": 13,
+   "name": "Anak 13",
+   "level": "Pemula"
+  },
+  {
+   "no": 14,
+   "name": "Anak 14",
+   "level": "Pemula"
+  },
+  {
+   "no": 15,
+   "name": "Anak 15",
+   "level": "Pemula"
+  },
+  {
+   "no": 16,
+   "name": "Anak 16",
+   "level": "Pemula"
+  },
+  {
+   "no": 17,
+   "name": "Anak 17",
+   "level": "Pemula"
+  },
+  {
+   "no": 18,
+   "name": "Anak 18",
+   "level": "Pemula"
+  },
+  {
+   "no": 19,
+   "name": "Anak 19",
+   "level": "Pemula"
+  },
+  {
+   "no": 20,
+   "name": "Anak 20",
+   "level": "Pemula"
+  },
+  {
+   "no": 21,
+   "name": "Anak 21",
+   "level": "Madya"
+  },
+  {
+   "no": 22,
+   "name": "Anak 22",
+   "level": "Madya"
+  },
+  {
+   "no": 23,
+   "name": "Anak 23",
+   "level": "Madya"
+  },
+  {
+   "no": 24,
+   "name": "Anak 24",
+   "level": "Madya"
+  },
+  {
+   "no": 25,
+   "name": "Anak 25",
+   "level": "Madya"
+  },
+  {
+   "no": 26,
+   "name": "Anak 26",
+   "level": "Madya"
+  },
+  {
+   "no": 27,
+   "name": "Anak 27",
+   "level": "Madya"
+  },
+  {
+   "no": 28,
+   "name": "Anak 28",
+   "level": "Madya"
+  },
+  {
+   "no": 29,
+   "name": "Anak 29",
+   "level": "Madya"
+  },
+  {
+   "no": 30,
+   "name": "Anak 30",
+   "level": "Madya"
+  },
+  {
+   "no": 31,
+   "name": "Anak 31",
+   "level": "Madya"
+  },
+  {
+   "no": 32,
+   "name": "Anak 32",
+   "level": "Madya"
+  },
+  {
+   "no": 33,
+   "name": "Anak 33",
+   "level": "Madya"
+  },
+  {
+   "no": 34,
+   "name": "Anak 34",
+   "level": "Madya"
+  },
+  {
+   "no": 35,
+   "name": "Anak 35",
+   "level": "Madya"
+  },
+  {
+   "no": 36,
+   "name": "Anak 36",
+   "level": "Madya"
+  },
+  {
+   "no": 37,
+   "name": "Anak 37",
+   "level": "Madya"
+  },
+  {
+   "no": 38,
+   "name": "Anak 38",
+   "level": "Madya"
+  },
+  {
+   "no": 39,
+   "name": "Anak 39",
+   "level": "Madya"
+  },
+  {
+   "no": 40,
+   "name": "Anak 40",
+   "level": "Madya"
+  },
+  {
+   "no": 41,
+   "name": "Anak 41",
+   "level": "Madya"
+  },
+  {
+   "no": 42,
+   "name": "Anak 42",
+   "level": "Madya"
+  },
+  {
+   "no": 43,
+   "name": "Anak 43",
+   "level": "Madya"
+  },
+  {
+   "no": 44,
+   "name": "Anak 44",
+   "level": "Madya"
+  },
+  {
+   "no": 45,
+   "name": "Anak 45",
+   "level": "Madya"
+  },
+  {
+   "no": 46,
+   "name": "Anak 46",
+   "level": "Mahir"
+  },
+  {
+   "no": 47,
+   "name": "Anak 47",
+   "level": "Mahir"
+  },
+  {
+   "no": 48,
+   "name": "Anak 48",
+   "level": "Mahir"
+  },
+  {
+   "no": 49,
+   "name": "Anak 49",
+   "level": "Mahir"
+  },
+  {
+   "no": 50,
+   "name": "Anak 50",
+   "level": "Mahir"
+  },
+  {
+   "no": 51,
+   "name": "Anak 51",
+   "level": "Mahir"
+  },
+  {
+   "no": 52,
+   "name": "Anak 52",
+   "level": "Mahir"
+  },
+  {
+   "no": 53,
+   "name": "Anak 53",
+   "level": "Mahir"
+  },
+  {
+   "no": 54,
+   "name": "Anak 54",
+   "level": "Mahir"
+  },
+  {
+   "no": 55,
+   "name": "Anak 55",
+   "level": "Mahir"
+  },
+  {
+   "no": 56,
+   "name": "Anak 56",
+   "level": "Mahir"
+  },
+  {
+   "no": 57,
+   "name": "Anak 57",
+   "level": "Mahir"
+  },
+  {
+   "no": 58,
+   "name": "Anak 58",
+   "level": "Mahir"
+  },
+  {
+   "no": 59,
+   "name": "Anak 59",
+   "level": "Mahir"
+  },
+  {
+   "no": 60,
+   "name": "Anak 60",
+   "level": "Mahir"
+  }
+ ]
+}

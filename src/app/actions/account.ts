@@ -1,0 +1,31 @@
+"use server";
+
+import { sql } from "@/lib/db";
+import { hashPassword, verifyPassword } from "@/lib/password";
+import { userAuthByEmail } from "@/lib/q";
+import { fail, ok, refresh, run } from "@/lib/act";
+import type { Result } from "@/lib/result";
+
+export async function updateProfile(fd: FormData): Promise<Result> {
+  return run(async (u) => {
+    const name = String(fd.get("name") ?? "").trim();
+    if (name.length < 2 || name.length > 100) return fail("Nama wajib diisi (2-100 karakter).");
+    await sql().query(`UPDATE users SET name = $2 WHERE id = $1`, [u.id, name]);
+    refresh();
+    return ok("Profil disimpan.");
+  });
+}
+
+export async function changePassword(fd: FormData): Promise<Result> {
+  return run(async (u) => {
+    const cur = String(fd.get("current") ?? "");
+    const next = String(fd.get("next") ?? "");
+    const confirm = String(fd.get("confirm") ?? "");
+    if (next.length < 8 || next.length > 100) return fail("Password baru minimal 8 karakter.");
+    if (next !== confirm) return fail("Konfirmasi password baru tidak sama.");
+    const full = await userAuthByEmail(u.email.toLowerCase());
+    if (!full || !(await verifyPassword(cur, full.password_hash))) return fail("Password saat ini salah.");
+    await sql().query(`UPDATE users SET password_hash = $2 WHERE id = $1`, [u.id, await hashPassword(next)]);
+    return ok("Password berhasil diganti.");
+  });
+}

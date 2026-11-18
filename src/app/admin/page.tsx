@@ -1,0 +1,26 @@
+import Link from "next/link";
+import { requireRole } from "@/lib/session";
+import { allProgramsBrief, listGurus, listInstitutionOptions } from "@/lib/q";
+import { programState } from "@/lib/view";
+import ProfileCard from "@/components/ProfileCard";
+
+export default async function AdminHome() {
+  const me = await requireRole("admin");
+  const [gurus, insts, programs] = await Promise.all([listGurus(), listInstitutionOptions(), allProgramsBrief()]);
+  const pending = gurus.filter((g) => g.status.startsWith("menunggu")).length;
+  const running = programs.filter((p) => programState({ status: p.status, start_date: p.start_date, weeks: p.weeks, months: p.weeks / 4 }).phase === "berjalan").length;
+  const waiting = programs.filter((p) => p.status === "menunggu_data").length;
+  return (
+    <>
+      <h1>Ringkasan</h1>
+      <p className="sub">Profil admin dan status keseluruhan program.</p>
+      <div className="stats">
+        <Link href="/admin/institusi" className="stat"><div className="k">Institusi</div><div className="v">{insts.length}</div></Link>
+        <Link href="/admin/guru" className="stat"><div className="k">Guru menunggu persetujuan</div><div className="v" style={{ color: pending ? "var(--warn)" : undefined }}>{pending}</div></Link>
+        <div className="stat"><div className="k">Program berjalan</div><div className="v">{running}</div></div>
+        <div className="stat"><div className="k">Program menunggu data murid</div><div className="v">{waiting}</div></div>
+      </div>
+      <ProfileCard user={me} />
+    </>
+  );
+}
