@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui";
 import ProgressBar from "@/components/ProgressBar";
 import RosterUpload from "@/components/RosterUpload";
 import { LEVELS, type Level } from "@/lib/engine";
-import { PHASE_LABEL, addDays, fmtDate, type Phase } from "@/lib/schedule";
+import { PHASE_LABEL, addDays, dayName, fmtDate, type Phase } from "@/lib/schedule";
 
 type Tab = "saat_ini" | "tabel" | "minggu" | "unduh" | "murid";
 export type PanelProps = {
@@ -40,7 +40,7 @@ export default function ProgramPanel(p: PanelProps) {
     return b ? (p.titles[b] ?? "-") : "";
   };
   const g = (w: number) => program.week_offset + w; // nomor minggu global
-  const releaseLabel = (w: number) => `Senin ${fmtDate(addDays(program.start_date, (w - 1) * 7))}, 02.00 WIB`;
+  const releaseLabel = (w: number) => { const d = addDays(program.start_date, (w - 1) * 7); return `${dayName(d)} ${fmtDate(d)}, 02.00 WIB`; };
   const weeks = Array.from({ length: visible }, (_, i) => i + 1);
 
   const rows = useMemo(() => {
@@ -198,7 +198,7 @@ export default function ProgramPanel(p: PanelProps) {
         <div className="card">
           <h2>File alokasi</h2>
           <p className="muted small">
-            File baru tersedia setiap Senin pukul 02.00 WIB. Setiap file berisi NIS, Nama Murid, Level, dan kolom Minggu ke-… dari awal program sampai minggu tersebut.
+            File baru tersedia setiap {dayName(program.start_date)} pukul 02.00 WIB. Setiap file berisi NIS, Nama Murid, Level, dan kolom Minggu ke-… dari awal program sampai minggu tersebut.
           </p>
           {released < program.weeks && !needsData && (
             <div className="notice ok">Berikutnya: Minggu ke-{g(released + 1)} akan dirilis {releaseLabel(released + 1)}.</div>

@@ -1,19 +1,12 @@
 import type { ReactNode } from "react";
 import Nav, { type NavItem } from "./Nav";
-import { logout } from "@/app/actions/auth";
 
 export default function Shell({ items, home, sub, children }: { items: NavItem[]; home: string; sub: string; children: ReactNode }) {
   return (
-    <div>
+    <div className={sub === "Admin" ? "admin-page" : "guru-page"}>
+      <a className="skip-link" href="#konten-utama">Lewati ke konten utama</a>
       <Nav items={items} home={home} sub={sub} />
-      <div className="topbar">
-        <span className="logo">N</span>
-        <strong className="grow">NusaLiterasi</strong>
-        <form action={logout}>
-          <button className="btn sm">Keluar</button>
-        </form>
-      </div>
-      <main className="main">
+      <main className="main" id="konten-utama">
         <div className="container">{children}</div>
       </main>
     </div>

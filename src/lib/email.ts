@@ -2,7 +2,7 @@ type Sent = { ok: true } | { ok: false; error: string };
 
 function parseFrom(from: string): { name: string; email: string } {
   const m = from.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
-  return m ? { name: m[1].replace(/^"|"$/g, ""), email: m[2] } : { name: "NusaLiterasi", email: from.trim() };
+  return m ? { name: m[1].replace(/^"|"$/g, ""), email: m[2] } : { name: "BukuFlow", email: from.trim() };
 }
 
 /** Kirim email lewat Brevo atau Resend (REST, tanpa dependensi). */
@@ -50,7 +50,7 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
 export function verifyEmailHtml(name: string, link: string): string {
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
   return `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;color:#17212b">
-<h2 style="color:#0f766e">NusaLiterasi</h2>
+<h2 style="color:#0f766e">BukuFlow</h2>
 <p>Halo ${esc(name)},</p>
 <p>Terima kasih sudah mendaftar. Klik tombol di bawah untuk mengonfirmasi email Anda. Akun akan langsung aktif.</p>
 <p><a href="${link}" style="display:inline-block;background:#0f766e;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Konfirmasi email</a></p>

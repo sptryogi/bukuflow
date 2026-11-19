@@ -2,12 +2,12 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "NusaLiterasi · Alokasi Buku",
-    short_name: "NusaLiterasi",
+    name: "BukuFlow · Alokasi Buku Literasi",
+    short_name: "BukuFlow",
     start_url: "/",
     display: "standalone",
-    background_color: "#f5f7f8",
-    theme_color: "#0f766e",
+    background_color: "#f6f8ff",
+    theme_color: "#4361ee",
     icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
   };
 }

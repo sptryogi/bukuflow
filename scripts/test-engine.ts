@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { generate, audit, TIERS, LEVELS } from "../src/lib/engine.ts";
 import type { Book, Stu, Level } from "../src/lib/engine.ts";
-import { firstMondayOfMonth, releasedWeeks, releaseMs, addDays, phase, nextMonthStr } from "../src/lib/schedule.ts";
+import { firstMondayOfMonth, releasedWeeks, releaseMs, addDays, phase, nextMonthStr, nextMonday, todayWib, resolveStart, dayName } from "../src/lib/schedule.ts";
 
 const seed = JSON.parse(readFileSync(new URL("./seed.json", import.meta.url), "utf8"));
 const books: Book[] = seed.books.map((b: any, i: number) => ({ id: i + 1, title: b.title, level: b.level as Level }));
@@ -84,8 +84,6 @@ console.log("Kasus tak layak & performa");
 {
   const r150 = run(mk(150, 0, 0), 12);
   ok(r150.errors.length === 0 && audit(r150.cells, 2).length === 0 && r150.crossLevel > 0, `150 murid Pemula x 12 minggu layak lewat level lain (${r150.crossLevel} lintas level)`);
-  const r = run(mk(250, 0, 0), 12);
-  ok(r.errors.length > 0, "250 murid (> 202 slot/minggu) ditolak: " + (r.errors[0] ?? "").slice(0, 60));
   const r102 = run(mk(10, 0, 0), 102);
   ok(r102.errors.length > 0 && /Minggu 102/.test(r102.errors[0]), "102 minggu > 101 judul: ditolak di minggu 102 (" + (r102.errors[0] ?? "").slice(0, 40) + "...)");
   const r200 = run(mk(70, 70, 60), 48);
@@ -94,6 +92,22 @@ console.log("Kasus tak layak & performa");
   const r2 = run(mk(60, 40, 20), 48);
   console.log(`    120 murid x 48 minggu: ${Date.now() - t} ms, error=${r2.errors.length}`);
   ok(r2.errors.length === 0 && audit(r2.cells, 2).length === 0, "120 murid x 48 minggu valid");
+}
+
+console.log("Murid lebih banyak dari judul: judul dibagi rata, murid tidak pernah mengulang");
+{
+  const t0 = Date.now();
+  const st = mk(100, 100, 100); // 300 murid, katalog 101 judul, copies = 1
+  const r = run(st, 48, { copies: 1 });
+  ok(r.errors.length === 0 && r.cells.length === 300 * 48, `300 murid x 48 minggu, copies=1: valid (${Date.now() - t0} ms)`);
+  ok(audit(r.cells, 999).length === 0, "tidak ada murid yang mengulang judul");
+  ok(r.peakShare >= 3 && r.peakShare <= 5, `satu judul dibaca paling banyak ${r.peakShare} murid per minggu (ideal 3)`);
+  const r250 = run(mk(250, 0, 0), 12);
+  ok(r250.errors.length === 0 && audit(r250.cells, 999).length === 0, "250 murid (> 202 slot) kini tetap dialokasikan");
+  const full = run(mk(100, 100, 100), 101, { copies: 1 });
+  ok(full.errors.length === 0 && audit(full.cells, 999).length === 0, "300 murid x 101 minggu: tiap murid membaca ke-101 judul tanpa ulang");
+  const solo = run(mk(1, 0, 0), 48, { copies: 1 });
+  ok(solo.errors.length === 0 && solo.peakShare === 1, "1 murid: peakShare 1");
 }
 
 console.log("Jadwal (WIB)");
@@ -110,6 +124,19 @@ console.log("Jadwal (WIB)");
   ok(addDays(start, 84) === "2027-03-29", "lanjutan mulai 84 hari setelah mulai");
   ok(phase("siap", start, 12, rel - 5) === "terjadwal" && phase("siap", start, 12, rel + 1) === "berjalan" && phase("siap", start, 12, releaseMs(start, 12) + 7 * 86400000) === "selesai", "fase terjadwal/berjalan/selesai");
   ok(nextMonthStr(Date.UTC(2026, 10, 18)) === "2026-12" && nextMonthStr(Date.UTC(2026, 11, 30)) === "2027-01", "bulan depan");
+}
+console.log("Pilihan mulai program");
+{
+  const thu = Date.UTC(2026, 10, 19, 3, 0); // Kamis 19 Nov 2026 10:00 WIB
+  ok(todayWib(thu) === "2026-11-19", "hari ini (WIB) = 2026-11-19");
+  ok(todayWib(Date.UTC(2026, 10, 18, 18, 0)) === "2026-11-19", "Rabu 18 Nov 18:00 UTC = Kamis 01:00 WIB");
+  ok(nextMonday(thu) === "2026-11-23", "Senin depan dari Kamis 19 Nov = 23 Nov");
+  ok(nextMonday(Date.UTC(2026, 10, 23, 3, 0)) === "2026-11-30", "hari ini Senin: Senin depan = 7 hari lagi");
+  ok(nextMonday(Date.UTC(2026, 10, 22, 3, 0)) === "2026-11-23", "hari ini Minggu: Senin depan = besok");
+  ok(resolveStart("hari_ini", "", thu) === "2026-11-19" && resolveStart("senin_depan", "", thu) === "2026-11-23", "resolveStart hari_ini / senin_depan");
+  ok(resolveStart("awal_bulan", "2026-12", thu) === "2026-12-07" && resolveStart("awal_bulan", "x", thu) === null, "resolveStart awal_bulan valid / tidak valid");
+  ok(releasedWeeks("2026-11-19", 12, thu) === 1, "mulai hari ini: minggu 1 langsung terbuka");
+  ok(dayName("2026-11-19") === "Kamis", "nama hari Kamis");
 }
 console.log(fails === 0 ? "\nSEMUA TES LULUS" : `\n${fails} TES GAGAL`);
 process.exit(fails === 0 ? 0 : 1);

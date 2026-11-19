@@ -53,7 +53,7 @@ export async function buildTemplate(institutionName: string, rows = 300): Promis
 
 export type ParsedRow = { line: number; nis: string; name: string; level: Level };
 
-export async function parseRoster(buf: Buffer): Promise<{ rows: ParsedRow[]; errors: string[] }> {
+export async function parseRoster(buf: Buffer, maxStudents = 300): Promise<{ rows: ParsedRow[]; errors: string[] }> {
   const wb = new ExcelJS.Workbook();
   try {
     await wb.xlsx.load(buf as never);
@@ -79,7 +79,7 @@ export async function parseRoster(buf: Buffer): Promise<{ rows: ParsedRow[]; err
   const rows: ParsedRow[] = [];
   const errors: string[] = [];
   const seen = new Map<string, number>();
-  const last = Math.min(ws.rowCount, 3000);
+  const last = Math.min(ws.rowCount, Math.max(3000, maxStudents * 2 + 100));
   for (let r = 2; r <= last; r++) {
     const row = ws.getRow(r);
     const nis = row.getCell(cNis).text.trim();
@@ -100,7 +100,7 @@ export async function parseRoster(buf: Buffer): Promise<{ rows: ParsedRow[]; err
     rows.push({ line: r, nis, name, level: level! });
   }
   if (!rows.length && !errors.length) errors.push("Tidak ada data murid di file.");
-  if (rows.length > 1500) errors.push("Maksimal 1500 murid per program.");
+  if (rows.length > maxStudents) errors.push(`Maksimal ${maxStudents} murid per program (batas diatur admin di menu Ringkasan → Pengaturan).`);
   return { rows, errors };
 }
 

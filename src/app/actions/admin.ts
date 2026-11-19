@@ -1,16 +1,15 @@
 "use server";
 
 import { sql } from "@/lib/db";
-import { getInstitution, getProgram, findOrCreateInstitution, normName, programRoster, userById } from "@/lib/q";
+import { getInstitution, getProgram, findOrCreateInstitution, normName, programRoster, setMaxStudents, userById } from "@/lib/q";
 import { persistProgram } from "@/lib/build";
 import { LEVELS, type Level } from "@/lib/engine";
-import { addDays, firstMondayOfMonth, releasedWeeks, WEEKS_PER_MONTH } from "@/lib/schedule";
+import { addDays, releasedWeeks, resolveStart, WEEKS_PER_MONTH } from "@/lib/schedule";
 import { fail, ok, refresh, run, toInt } from "@/lib/act";
 import type { Program } from "@/lib/types";
 import type { Result } from "@/lib/result";
 
 const asAdmin = (fn: Parameters<typeof run>[0]) => run(fn, "admin");
-const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const normLevel = (v: unknown): Level | null => LEVELS.find((l) => l.toLowerCase() === String(v ?? "").trim().toLowerCase()) ?? null;
 
 /* ---------- guru ---------- */
@@ -150,9 +149,9 @@ export async function createProgram(fd: FormData): Promise<Result> {
       offset = prev.week_offset + prev.weeks;
       cont = prev.id;
     } else {
-      const month = String(fd.get("month") ?? "");
-      if (!MONTH_RE.test(month)) return fail("Pilih bulan mulai program.");
-      start = firstMondayOfMonth(month);
+      const s = resolveStart(mode, String(fd.get("month") ?? ""), Date.now());
+      if (!s) return fail("Pilih cara mulai program (awal bulan, Senin depan, atau hari ini).");
+      start = s;
     }
     await sql().query(
       `INSERT INTO programs (institution_id, months, weeks, start_date, mode, continues_from, week_offset, copies)
@@ -175,10 +174,10 @@ export async function updateProgram(fd: FormData): Promise<Result> {
     const next: Program = { ...p, months, weeks: months * WEEKS_PER_MONTH };
     let from = 1;
 
-    if (mode === "awal_bulan") {
-      const month = String(fd.get("month") ?? "");
-      if (!MONTH_RE.test(month)) return fail("Pilih bulan mulai program.");
-      next.start_date = firstMondayOfMonth(month);
+    if (mode !== "lanjutan") {
+      const s = resolveStart(mode, String(fd.get("month") ?? ""), Date.now());
+      if (!s) return fail("Pilih cara mulai program (awal bulan, Senin depan, atau hari ini).");
+      next.start_date = s;
       next.mode = "awal_bulan";
       next.continues_from = null;
       next.week_offset = 0;
@@ -198,5 +197,17 @@ export async function deleteProgram(id: number): Promise<Result> {
     await sql().query(`DELETE FROM programs WHERE id = $1`, [id]);
     refresh();
     return ok("Program dihapus.");
+  });
+}
+
+/* ---------- pengaturan ---------- */
+
+export async function saveSettings(fd: FormData): Promise<Result> {
+  return asAdmin(async () => {
+    const n = toInt(fd.get("max_students"), 1, 5000);
+    if (!n) return fail("Maksimal murid harus berupa angka 1 sampai 5000.");
+    await setMaxStudents(n);
+    refresh();
+    return ok(`Maksimal murid per program diubah menjadi ${n}.`);
   });
 }

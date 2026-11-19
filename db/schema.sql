@@ -1,4 +1,4 @@
--- NusaLiterasi v2: skema database (PostgreSQL / Neon). Aman dijalankan berulang kali.
+-- BukuFlow v2: skema database (PostgreSQL / Neon). Aman dijalankan berulang kali.
 
 CREATE TABLE IF NOT EXISTS institutions (
   id serial PRIMARY KEY,
@@ -83,3 +83,10 @@ CREATE TABLE IF NOT EXISTS throttle (
   count int NOT NULL,
   window_start timestamptz NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS settings (
+  key text PRIMARY KEY,
+  value text NOT NULL
+);
+
+INSERT INTO settings (key, value) VALUES ('max_students', '300') ON CONFLICT (key) DO NOTHING;

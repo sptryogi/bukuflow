@@ -66,7 +66,10 @@ export async function persistProgram(prog: Program, roster: RosterRow[], fromWee
     ok: true,
     crossLevel: gen.crossLevel,
     message: `Alokasi dibuat untuk ${roster.length} murid (${gen.cells.length} penugasan baru).`,
-    warnings: gen.crossLevel ? [`${gen.crossLevel} penugasan memakai buku level lain karena judul di level murid sudah habis.`] : undefined,
+    warnings: [
+      gen.peakShare > prog.copies ? `Murid lebih banyak dari judul: pada minggu yang sama satu judul dibaca hingga ${gen.peakShare} murid (dibagi rata). Seorang murid tidak pernah mendapat judul yang sama dua kali.` : "",
+      gen.crossLevel ? `${gen.crossLevel} penugasan memakai buku level lain karena judul di level murid sudah habis.` : "",
+    ].filter(Boolean),
   };
 }
 

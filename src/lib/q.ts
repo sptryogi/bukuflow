@@ -147,4 +147,24 @@ export async function throttle(key: string, max: number, windowSec: number): Pro
   return Number(r[0].count) <= max;
 }
 
+/** Batas jumlah murid per program (diatur admin). Default 300 bila tabel/nilai belum ada. */
+export const DEFAULT_MAX_STUDENTS = 300;
+export async function getMaxStudents(): Promise<number> {
+  try {
+    const r = await q().query(`SELECT value FROM settings WHERE key = 'max_students'`);
+    const n = Number(r[0]?.value);
+    return Number.isInteger(n) && n >= 1 && n <= 5000 ? n : DEFAULT_MAX_STUDENTS;
+  } catch {
+    return DEFAULT_MAX_STUDENTS;
+  }
+}
+
+export async function setMaxStudents(n: number): Promise<void> {
+  await q().query(`CREATE TABLE IF NOT EXISTS settings (key text PRIMARY KEY, value text NOT NULL)`);
+  await q().query(
+    `INSERT INTO settings (key, value) VALUES ('max_students', $1) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+    [String(n)],
+  );
+}
+
 export type { Level };

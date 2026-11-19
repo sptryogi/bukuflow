@@ -1,4 +1,6 @@
-# NusaLiterasi · Aplikasi Alokasi Buku (Admin + Guru)
+# BukuFlow · Aplikasi Alokasi Buku (Admin + Guru)
+
+> Dulu bernama NusaLiterasi. Halaman depan (landing) di `/`, tombol Masuk/Daftar membuka aplikasi.
 
 Web app (desktop dan HP) untuk mengalokasikan judul buku ke murid per minggu, per institusi dan per program (3, 6, atau 12 bulan).
 **Stack:** Next.js 15 · Neon Postgres (serverless) · Vercel · email lewat Brevo/Resend.
@@ -20,12 +22,14 @@ Program baru berstatus **Menunggu data murid** sampai template Excel (Instansi, 
 ## Aturan alokasi
 
 - Murid **tidak pernah menerima judul yang sama** dua kali dalam satu program (termasuk program lanjutan).
-- Satu judul dibaca maksimal *eksemplar per judul* murid (default 2) pada minggu yang sama.
+- Satu judul idealnya dibaca maksimal *eksemplar per judul* murid (default 2) pada minggu yang sama. **Bila murid lebih banyak dari judul × eksemplar, batas ini naik otomatis** dan judul dibagi rata (mis. 300 murid / 101 judul = sekitar 3 murid per judul per minggu). Alokasi tidak lagi ditolak karena itu. Yang tetap dilarang: satu murid menerima judul yang sama dua kali dalam satu program.
 - Level sendiri dulu, memakai rotasi yang sama dengan Excel (kelompok g, minggu w, judul ke-(g+w−1) mod jumlah judul). Jika judul level murid habis, ambil **satu level di atasnya**; level teratas (Mahir) jatuh ke level di bawahnya:
   Pemula → Madya → Mahir · Madya → Mahir → Pemula · Mahir → Madya → Pemula.
 - Setiap minggu dicocokkan dengan bipartite matching agar kapasitas terpakai optimal. Jika katalog benar-benar tidak cukup, alokasi **ditolak dengan pesan jelas** dan tidak ada data yang berubah.
-- 1 bulan = 4 minggu (3/6/12 bulan = 12/24/48 minggu). Kemampuan: 200 murid × 48 minggu masih layak dengan katalog 101 judul (sudah diuji).
-- Seluruh alokasi dibuat sekali saat program diaktifkan. **Minggu baru terlihat otomatis setiap Senin 02.00 WIB**; tidak perlu cron. Guru hanya menerima data minggu yang sudah dirilis.
+- 1 bulan = 4 minggu (3/6/12 bulan = 12/24/48 minggu). Sudah diuji: 300 murid × 48 minggu (bahkan 101 minggu) dengan katalog 101 judul.
+- **Mulai program**: *awal bulan* (Senin pertama bulan pilihan), *Senin depan*, atau *hari ini* (untuk uji coba). Minggu berikutnya rilis tiap pekan pukul 02.00 WIB pada hari yang sama dengan hari mulai.
+- **Maksimal murid per program** diatur admin di Ringkasan → Pengaturan (default 300). Berlaku untuk unggahan dan jumlah baris template Excel.
+- Seluruh alokasi dibuat sekali saat program diaktifkan. **Minggu baru terlihat otomatis tiap pekan pukul 02.00 WIB**; tidak perlu cron. Guru hanya menerima data minggu yang sudah dirilis.
 - Program berjalan yang diubah durasinya atau daftar muridnya (*lanjutkan yang sudah berjalan*) **tidak mengubah minggu yang sudah dirilis**.
 
 ## Deploy dari nol
@@ -34,15 +38,15 @@ Yang perlu disiapkan: akun **GitHub**, **Neon** (database), **Vercel** (hosting)
 
 ### 1. Push ke GitHub
 
-1. Ekstrak zip, buka terminal di folder `nusaliterasi`.
-2. Buat repository kosong di <https://github.com/new> (nama bebas, misal `nusaliterasi`, pilih **Private**, jangan centang README).
+1. Ekstrak zip, buka terminal di folder `bukuflow`.
+2. Buat repository kosong di <https://github.com/new> (nama bebas, misal `bukuflow`, pilih **Private**, jangan centang README).
 3. Jalankan:
    ```bash
    git init
    git add .
-   git commit -m "NusaLiterasi v2"
+   git commit -m "BukuFlow v2"
    git branch -M main
-   git remote add origin https://github.com/USERNAME/nusaliterasi.git
+   git remote add origin https://github.com/USERNAME/bukuflow.git
    git push -u origin main
    ```
    File `.env*` sudah masuk `.gitignore`, jadi rahasia tidak ikut terunggah.
@@ -52,7 +56,7 @@ Yang perlu disiapkan: akun **GitHub**, **Neon** (database), **Vercel** (hosting)
 1. Daftar di <https://neon.com>, klik **Create project**.
 2. **Region: AWS Asia Pacific (Singapore)**. Dekat dengan Indonesia dan dengan region fungsi Vercel (`sin1`, sudah diatur di `vercel.json`).
 3. Di dashboard project klik **Connect**, pilih **Pooled connection**, salin *connection string* (diawali `postgresql://…`). Ini nilai `DATABASE_URL`.
-4. Isi tabel dan katalog 101 buku, pilih **salah satu**:
+4. Isi tabel dan katalog 101 buku, pilih **salah satu** (untuk database lama: jalankan ulang `db/schema.sql`, aman, hanya menambah tabel `settings`):
    - **Tanpa terminal:** menu **SQL Editor** di Neon. Tempel seluruh isi `db/schema.sql`, tekan **Run**. Lalu tempel isi `db/seed.sql`, **Run**.
    - **Dengan terminal:** `cp .env.example .env.local`, isi `DATABASE_URL`, lalu `npm install && npm run db:setup`.
 
@@ -64,10 +68,10 @@ Yang perlu disiapkan: akun **GitHub**, **Neon** (database), **Vercel** (hosting)
 Link konfirmasi dikirim lewat API email. Pilih **Brevo** (paling mudah, gratis 300 email/hari, cukup verifikasi alamat pengirim):
 
 1. Daftar di <https://www.brevo.com>.
-2. **Senders, Domains & Dedicated IPs → Senders → Add a sender**: isi nama (NusaLiterasi) dan alamat email pengirim, lalu klik link verifikasi yang masuk ke email tersebut.
+2. **Senders, Domains & Dedicated IPs → Senders → Add a sender**: isi nama (BukuFlow) dan alamat email pengirim, lalu klik link verifikasi yang masuk ke email tersebut.
    Untuk pengiriman ke inbox yang lebih terpercaya (tidak masuk spam), sebaiknya pakai alamat di **domain milik Anda** dan verifikasi domainnya (SPF/DKIM) di menu yang sama.
 3. **SMTP & API → API Keys → Generate a new API key**, salin nilainya (`xkeysib-…`).
-4. Isi env: `EMAIL_PROVIDER=brevo`, `BREVO_API_KEY=…`, `EMAIL_FROM=NusaLiterasi <alamat-yang-sudah-diverifikasi>`.
+4. Isi env: `EMAIL_PROVIDER=brevo`, `BREVO_API_KEY=…`, `EMAIL_FROM=BukuFlow <alamat-yang-sudah-diverifikasi>`.
 
 **Resend** juga didukung (`EMAIL_PROVIDER=resend`, `RESEND_API_KEY`), tetapi Resend **mewajibkan domain yang sudah diverifikasi** agar bisa mengirim ke selain email Anda sendiri. Tanpa domain, pakai Brevo.
 
@@ -75,7 +79,7 @@ Link konfirmasi dikirim lewat API email. Pilih **Brevo** (paling mudah, gratis 3
 
 ### 4. Deploy di Vercel
 
-1. Masuk <https://vercel.com> dengan akun GitHub, **Add New → Project**, pilih repo `nusaliterasi`, **Import**. Framework terdeteksi otomatis (Next.js).
+1. Masuk <https://vercel.com> dengan akun GitHub, **Add New → Project**, pilih repo `bukuflow`, **Import**. Framework terdeteksi otomatis (Next.js).
 2. Buka **Environment Variables**, tambahkan:
 
    | Nama | Nilai |
@@ -84,7 +88,7 @@ Link konfirmasi dikirim lewat API email. Pilih **Brevo** (paling mudah, gratis 3
    | `ADMIN_EMAIL` | `admin` |
    | `ADMIN_PASSWORD` | `DRPersada01` (ganti setelah login pertama) |
    | `SESSION_SECRET` | string acak ≥ 32 karakter: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-   | `APP_URL` | alamat aplikasi, misal `https://nusaliterasi.vercel.app` (isi setelah tahu URL-nya, lihat langkah 4) |
+   | `APP_URL` | alamat aplikasi, misal `https://bukuflow.vercel.app` (isi setelah tahu URL-nya, lihat langkah 4) |
    | `EMAIL_PROVIDER`, `BREVO_API_KEY`, `EMAIL_FROM` | dari langkah 3 |
 
 3. Klik **Deploy**.
@@ -108,7 +112,7 @@ Link konfirmasi dikirim lewat API email. Pilih **Brevo** (paling mudah, gratis 3
 | Login admin gagal | `ADMIN_EMAIL`/`ADMIN_PASSWORD` belum diisi di Vercel saat login pertama. Isi lalu redeploy. Setelah admin terbentuk, password mengikuti yang tersimpan di database |
 | Email tidak terkirim | Pengirim belum diverifikasi (Brevo), atau memakai Resend tanpa domain. Cek `EMAIL_FROM` sama persis dengan pengirim terverifikasi dan lihat Vercel → Logs |
 | Link email membuka alamat salah | `APP_URL` belum diisi/di-redeploy |
-| "Alokasi tidak dapat dibuat" | Katalog/eksemplar tidak cukup untuk jumlah murid dan durasi. Pesan menyebut minggu dan masalahnya. Tambah judul di Katalog Buku |
+| "Alokasi tidak dapat dibuat" | Hanya terjadi bila durasi (minggu) melebihi jumlah judul katalog sehingga murid kehabisan judul baru. Kurangi durasi atau tambah judul di Katalog Buku |
 | Upload ditolak | Pakai template resmi, NIS unik dan tidak kosong, level dari dropdown. Pesan error menyebut nomor baris |
 
 ## Catatan keamanan

@@ -125,7 +125,7 @@ export async function sendVerification(): Promise<Result> {
   const raw = newToken();
   await sql().query(`UPDATE users SET verify_hash = $2, verify_expires = now() + interval '24 hours' WHERE id = $1`, [u.id, sha256(raw)]);
   const link = `${await baseUrl()}/verifikasi?token=${raw}`;
-  const sent = await sendEmail(u.email, "Konfirmasi email NusaLiterasi", verifyEmailHtml(u.name, link));
+  const sent = await sendEmail(u.email, "Konfirmasi email BukuFlow", verifyEmailHtml(u.name, link));
   if (!sent.ok) return fail(sent.error);
   return ok(`Link konfirmasi sudah dikirim ke ${u.email}. Cek kotak masuk (dan folder spam), lalu klik tombolnya.`);
 }

@@ -1,4 +1,4 @@
--- NusaLiterasi: katalog 101 judul dari NusaLiterasi_Alokasi_Buku_Diperbaiki.xlsx
+-- BukuFlow: katalog 101 judul dari BukuFlow_Alokasi_Buku_Diperbaiki.xlsx
 -- Aman dijalankan berulang kali (tidak menimpa data yang sudah ada).
 
 INSERT INTO books (title, level, price, source) VALUES

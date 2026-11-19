@@ -20,7 +20,7 @@ export type Program = {
   institution_id: number;
   months: number;
   weeks: number;
-  start_date: string; // YYYY-MM-DD (Senin)
+  start_date: string; // YYYY-MM-DD (hari rilis minggu 1; Senin bila awal bulan / Senin depan)
   mode: "awal_bulan" | "lanjutan";
   continues_from: number | null;
   week_offset: number;

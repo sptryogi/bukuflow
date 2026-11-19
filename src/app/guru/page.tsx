@@ -12,8 +12,10 @@ export default async function GuruHome() {
   const programs = inst ? await institutionPrograms(inst.id) : [];
   return (
     <>
-      <h1>Beranda</h1>
-      <p className="sub">Halo, {me.name}.</p>
+      <section className="dash-hero">
+        <h1>Halo, {me.name}!</h1>
+        <p className="sub">Pantau alokasi buku murid di institusi Anda minggu demi minggu.</p>
+      </section>
       <ProfileCard user={me} institution={inst?.name ?? null} />
       <h2>Program {inst ? `di ${inst.name}` : ""}</h2>
       {!inst && <div className="notice warn">Akun Anda belum terhubung ke institusi. Hubungi admin.</div>}

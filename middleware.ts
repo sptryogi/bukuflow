@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE, readToken } from "@/lib/auth";
 
-const PUBLIC = ["/login", "/daftar", "/verifikasi"];
+const PUBLIC = ["/", "/login", "/daftar", "/verifikasi"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -14,7 +14,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   };
 
-  if (PUBLIC.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+  if (PUBLIC.some((p) => pathname === p || (p !== "/" && pathname.startsWith(p + "/")))) {
     return parts && pathname === "/login" ? go(parts[1] === "admin" ? "/admin" : "/guru") : NextResponse.next();
   }
   if (!parts) return go("/login");

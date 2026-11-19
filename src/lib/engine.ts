@@ -2,7 +2,9 @@
 //
 // Aturan:
 //  1. Murid tidak pernah menerima judul yang sama dua kali dalam satu program (termasuk lanjutan).
-//  2. Satu judul dibaca maksimal `copies` murid pada minggu yang sama.
+//  2. Satu judul idealnya dibaca maksimal `copies` murid pada minggu yang sama. Bila murid lebih banyak
+//     dari judul x copies, batas ini DILONGGARKAN otomatis (dibagi rata, mis. 300 murid / 101 judul = 3 murid
+//     per judul). Yang tidak pernah dilonggarkan: satu murid tidak boleh menerima judul yang sama dua kali.
 //  3. Preferensi judul: level sendiri dulu (rotasi seperti Excel: kelompok g, minggu w -> judul (g+w-1) mod n).
 //     Jika judul level sendiri habis, ambil level di atasnya, lalu level lain.
 //     Pemula: Pemula > Madya > Mahir. Madya: Madya > Mahir > Pemula. Mahir: Mahir > Madya > Pemula.
@@ -32,7 +34,12 @@ export type GenInput = {
   hardRead?: Map<number, Set<number>>; // judul terlarang (program yang dilanjutkan)
   softRead?: Map<number, Set<number>>; // judul dari program lama, dihindari bila bisa
 };
-export type GenResult = { cells: Cell[]; errors: string[]; crossLevel: number };
+export type GenResult = {
+  cells: Cell[];
+  errors: string[];
+  crossLevel: number;
+  peakShare: number; // jumlah murid terbanyak yang membaca judul yang sama pada minggu yang sama
+};
 
 export const byNis = (a: Stu, b: Stu) => a.nis.localeCompare(b.nis, "id", { numeric: true }) || a.id - b.id;
 
@@ -45,14 +52,11 @@ export function catalogCounts(books: Book[]): Record<Level, number> {
 export function generate(inp: GenInput): GenResult {
   const { students, books, copies, weekFrom, weekTo, weekOffset } = inp;
   const errors: string[] = [];
-  if (!students.length) return { cells: [], errors: ["Belum ada murid."], crossLevel: 0 };
-  if (students.length > books.length * copies) {
-    return {
-      cells: [],
-      errors: [`Murid (${students.length}) melebihi kapasitas katalog: ${books.length} judul × ${copies} eksemplar = ${books.length * copies} per minggu.`],
-      crossLevel: 0,
-    };
-  }
+  if (!students.length) return { cells: [], errors: ["Belum ada murid."], crossLevel: 0, peakShare: 0 };
+  if (!books.length) return { cells: [], errors: ["Katalog buku kosong."], crossLevel: 0, peakShare: 0 };
+  // Batas dasar per judul per minggu: tidak lebih kecil dari `copies`, dan cukup untuk membagi rata semua murid.
+  const baseCap = Math.max(copies, Math.ceil(students.length / books.length));
+  let peak = 0;
 
   const sorted = [...students].sort(byNis);
   const titles: Record<Level, Book[]> = { Pemula: [], Madya: [], Mahir: [] };
@@ -74,7 +78,7 @@ export function generate(inp: GenInput): GenResult {
     const gw = weekOffset + w;
     const cand = new Map<number, number[]>();
     for (const s of sorted) {
-      const g = Math.floor(rank.get(s.id)! / copies);
+      const g = Math.floor(rank.get(s.id)! / baseCap);
       const have = read.get(s.id)!;
       const soft = inp.softRead?.get(s.id);
       const list: number[] = [];
@@ -95,37 +99,49 @@ export function generate(inp: GenInput): GenResult {
       cand.set(s.id, list);
     }
 
-    const occ = new Map<number, number[]>();
-    const assigned = new Map<number, number>();
-    const tryAssign = (sid: number, visited: Set<number>): boolean => {
-      for (const b of cand.get(sid)!) {
-        if (visited.has(b)) continue;
-        visited.add(b);
-        const list = occ.get(b) ?? [];
-        if (list.length < copies) {
-          occ.set(b, [...list, sid]);
-          assigned.set(sid, b);
-          return true;
-        }
-        for (const other of list) {
-          if (tryAssign(other, visited)) {
-            occ.set(b, [...(occ.get(b) ?? []).filter((x) => x !== other), sid]);
-            assigned.set(sid, b);
-            return true;
-          }
-        }
-      }
-      return false;
-    };
-
-    const failed: Stu[] = [];
-    for (const s of sorted) if (!tryAssign(s.id, new Set())) failed.push(s);
-    if (failed.length) {
+    // Murid yang sudah membaca seluruh katalog: satu-satunya kegagalan yang tidak bisa diatasi.
+    const dead = sorted.filter((s) => cand.get(s.id)!.length === 0);
+    if (dead.length) {
       errors.push(
-        `Minggu ${w}: ${failed.length} murid tidak mendapat judul baru (mis. ${failed[0].name}). Katalog atau eksemplar tidak cukup untuk durasi ini.`,
+        `Minggu ${w}: ${dead.length} murid (mis. ${dead[0].name}) sudah membaca seluruh ${books.length} judul katalog. Kurangi durasi atau tambah judul buku.`,
       );
       break;
     }
+
+    // Cocokkan murid ke judul dengan batas `cap` murid per judul. Bila gagal, batas dinaikkan bertahap
+    // (murid boleh berbagi judul pada minggu yang sama, tetapi tidak pernah mengulang judulnya sendiri).
+    let occ = new Map<number, number[]>();
+    let assigned = new Map<number, number>();
+    let cap = baseCap;
+    for (;;) {
+      occ = new Map();
+      assigned = new Map();
+      const tryAssign = (sid: number, visited: Set<number>): boolean => {
+        for (const b of cand.get(sid)!) {
+          if (visited.has(b)) continue;
+          visited.add(b);
+          const list = occ.get(b) ?? [];
+          if (list.length < cap) {
+            occ.set(b, [...list, sid]);
+            assigned.set(sid, b);
+            return true;
+          }
+          for (const other of list) {
+            if (tryAssign(other, visited)) {
+              occ.set(b, [...(occ.get(b) ?? []).filter((x) => x !== other), sid]);
+              assigned.set(sid, b);
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+      let all = true;
+      for (const s of sorted) if (!tryAssign(s.id, new Set())) { all = false; break; }
+      if (all) break;
+      cap = cap < baseCap + 4 ? cap + 1 : Math.ceil(cap * 1.5);
+    }
+    for (const list of occ.values()) peak = Math.max(peak, list.length);
     for (const s of sorted) {
       const b = assigned.get(s.id)!;
       read.get(s.id)!.add(b);
@@ -133,7 +149,7 @@ export function generate(inp: GenInput): GenResult {
       if (levelOf.get(b) !== s.level) cross++;
     }
   }
-  return errors.length ? { cells: [], errors, crossLevel: 0 } : { cells, errors, crossLevel: cross };
+  return errors.length ? { cells: [], errors, crossLevel: 0, peakShare: 0 } : { cells, errors, crossLevel: cross, peakShare: peak };
 }
 
 /** Pemeriksaan konsistensi (untuk tes dan audit). */

@@ -2,7 +2,7 @@
 
 import { sql } from "@/lib/db";
 import { actor } from "@/lib/session";
-import { getProgram, programRoster } from "@/lib/q";
+import { getMaxStudents, getProgram, programRoster } from "@/lib/q";
 import { applyRoster } from "@/lib/build";
 import { parseRoster, type ParsedRow } from "@/lib/excel";
 import { fail, refresh, run } from "@/lib/act";
@@ -22,7 +22,7 @@ async function readFile(fd: FormData): Promise<{ rows: ParsedRow[]; errors: stri
   if (!(f instanceof File) || f.size === 0) return "Pilih file Excel (.xlsx) terlebih dahulu.";
   if (f.size > 3 * 1024 * 1024) return "Ukuran file maksimal 3 MB.";
   if (!/\.xlsx$/i.test(f.name)) return "Gunakan file .xlsx (template yang diunduh dari halaman ini).";
-  return parseRoster(Buffer.from(await f.arrayBuffer()));
+  return parseRoster(Buffer.from(await f.arrayBuffer()), await getMaxStudents());
 }
 
 /** Langkah 1: baca dan validasi file, tampilkan pratinjau. Tidak ada yang disimpan. */

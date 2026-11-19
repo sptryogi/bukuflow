@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createProgram, deleteProgram, updateProgram } from "@/app/actions/admin";
 import { ActionForm, Modal, RunButton } from "@/components/ui";
-import { nextMonthStr } from "@/lib/schedule";
+import { dayName, nextMonday, nextMonthStr, todayWib } from "@/lib/schedule";
 import type { Result } from "@/lib/result";
 
 type Opt = { id: number; label: string };
@@ -15,7 +15,9 @@ function Form(props: {
   onClose: () => void;
 }) {
   const edit = !!props.program;
-  const [mode, setMode] = useState<"awal_bulan" | "lanjutan">(edit ? "lanjutan" : "awal_bulan");
+  const [mode, setMode] = useState<"awal_bulan" | "senin_depan" | "hari_ini" | "lanjutan">(edit ? "lanjutan" : "awal_bulan");
+  const today = todayWib(Date.now());
+  const monday = nextMonday(Date.now());
   const running = edit && props.program!.status === "siap";
   const canContinueFromPrev = !edit && props.prev.length > 0;
   return (
@@ -34,8 +36,9 @@ function Form(props: {
           </div>
           {!edit && (
             <div>
-              <label className="f" htmlFor="copies">Eksemplar per judul</label>
+              <label className="f" htmlFor="copies">Eksemplar per judul (minimum)</label>
               <input id="copies" name="copies" type="number" min={1} max={20} defaultValue={2} className="input" />
+              <div className="muted small" style={{ marginTop: 4 }}>Bila murid lebih banyak dari judul, batas ini naik otomatis dan judul dibagi rata.</div>
             </div>
           )}
         </div>
@@ -50,6 +53,22 @@ function Form(props: {
             {mode === "awal_bulan" && (
               <input name="month" type="month" className="input" style={{ marginTop: 8 }} defaultValue={nextMonthStr(Date.now())} required />
             )}
+          </span>
+        </label>
+
+        <label className="radio">
+          <input type="radio" checked={mode === "senin_depan"} onChange={() => setMode("senin_depan")} />
+          <span>
+            <strong>Mulai Senin depan</strong>
+            <div className="muted small">{dayName(monday)}, {monday}. Minggu berikutnya dirilis tiap Senin 02.00 WIB.</div>
+          </span>
+        </label>
+
+        <label className="radio">
+          <input type="radio" checked={mode === "hari_ini"} onChange={() => setMode("hari_ini")} />
+          <span>
+            <strong>Mulai hari ini (untuk uji coba)</strong>
+            <div className="muted small">{dayName(today)}, {today}. Minggu 1 langsung terbuka; minggu berikutnya dirilis tiap {dayName(today)} 02.00 WIB.</div>
           </span>
         </label>
 

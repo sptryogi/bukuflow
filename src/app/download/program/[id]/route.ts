@@ -37,12 +37,12 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   };
 
   const slug = (inst?.name ?? "program").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 40) || "program";
-  const base = `NusaLiterasi_${slug}_Minggu${p.week_offset + upto}`;
+  const base = `BukuFlow_${slug}_Minggu${p.week_offset + upto}`;
 
   if (format === "pdf") {
     const pdf = await buildResultPdf(
       grid,
-      "NusaLiterasi - Hasil Alokasi Buku",
+      "BukuFlow - Hasil Alokasi Buku",
       `${inst?.name ?? ""} | Program ${p.months} bulan (mulai ${fmtDate(p.start_date)}) | Minggu ke-${grid.weeks[0]} s.d. ${grid.weeks[grid.weeks.length - 1]}`,
     );
     return new Response(new Uint8Array(pdf), { headers: { "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="${base}.pdf"` } });
