@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSessionUser, homeOf } from "@/lib/session";
 import LandingNav from "@/components/LandingNav";
 import Brand from "@/components/Logo";
+import ContactForm from "@/components/ContactForm";
 import "./landing.css";
 
 export const dynamic = "force-dynamic";
@@ -154,7 +155,6 @@ export default async function Landing() {
               <li className="stat-item"><p className="stat-number">101</p><p className="stat-label">📚 Judul di katalog awal</p></li>
               <li className="stat-item"><p className="stat-number">3</p><p className="stat-label">🎓 Level bacaan</p></li>
               <li className="stat-item"><p className="stat-number">12–48</p><p className="stat-label">🗓️ Minggu per program</p></li>
-              <li className="stat-item"><p className="stat-number">0</p><p className="stat-label">🔁 Judul berulang per murid</p></li>
             </ul>
           </div>
         </section>
@@ -192,21 +192,29 @@ export default async function Landing() {
           </div>
         </section>
 
-        <section className="section cta-section" aria-labelledby="cta-title">
+        <section className="section cta-section" id="kontak" aria-labelledby="kontak-title">
           <div className="lp-container cta-panel">
-            <p className="section-kicker section-kicker-light">Siap Mulai?</p>
-            <h2 id="cta-title">Rapikan Alokasi Buku Sekolah Anda</h2>
-            <p>Daftar sebagai guru atau masuk jika sudah punya akun.</p>
-            <div className="cta-actions">
-              {home ? (
-                <Link href={home} className="btn btn-light btn-lg">Buka Dashboard</Link>
-              ) : (
-                <>
-                  <Link href="/daftar" className="btn btn-light btn-lg">Daftar Sekarang</Link>
-                  <Link href="/login" className="btn btn-outline-light btn-lg">Masuk</Link>
-                </>
-              )}
+            <div className="cta-copy">
+              <p className="section-kicker section-kicker-light">Kontak &amp; Pendaftaran</p>
+              <h2 id="kontak-title">Siap Membangun Sekolah Pembaca?</h2>
+              <p>Hubungi tim BukuFlow atau daftarkan sekolah Anda sekarang. Kami siap membantu menyiapkan kelas membaca pertama dalam satu minggu.</p>
+              <ul className="contact-list">
+                <li><span aria-hidden="true">📧</span> <a href="mailto:dianrakyatdigital@gmail.com">dianrakyatdigital@gmail.com</a></li>
+                <li><span aria-hidden="true">📞</span> <a href="tel:+622112345678">(021) 1234-5678</a></li>
+                <li><span aria-hidden="true">📍</span> <span>Jl. Buncit Persada No. 1, Kalibata, Pancoran, Jakarta Selatan</span></li>
+              </ul>
+              <div className="cta-actions">
+                {home ? (
+                  <Link href={home} className="btn btn-light btn-lg">Buka Dashboard</Link>
+                ) : (
+                  <>
+                    <Link href="/daftar" className="btn btn-light btn-lg">Daftar Sekarang</Link>
+                    <Link href="/login" className="btn btn-outline-light btn-lg">Sudah Punya Akun? Masuk</Link>
+                  </>
+                )}
+              </div>
             </div>
+            <ContactForm />
           </div>
         </section>
       </main>
@@ -224,6 +232,7 @@ export default async function Landing() {
               <li><a href="#fitur">Fitur</a></li>
               <li><a href="#cara-kerja">Cara Kerja</a></li>
               <li><a href="#faq">FAQ</a></li>
+              <li><a href="#kontak">Kontak</a></li>
             </ul>
           </nav>
           <div>

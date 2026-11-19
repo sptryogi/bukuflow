@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { sql } from "@/lib/db";
 import { COOKIE, REG_COOKIE, REG_MS, SESSION_MS, makeToken } from "@/lib/auth";
 import { equalSecret, hashPassword, newToken, sha256, verifyPassword } from "@/lib/password";
-import { findOrCreateInstitution, throttle, userAuthByEmail } from "@/lib/q";
+import { findOrCreateInstitution, stampOf, throttle, userAuthByEmail } from "@/lib/q";
 import { sendEmail, verifyEmailHtml } from "@/lib/email";
 import { getRegUser, homeOf } from "@/lib/session";
 import { fail, ok } from "@/lib/act";
@@ -62,12 +62,14 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
     await setCookie(REG_COOKIE, await makeToken([u.id], secret(), REG_MS), REG_MS);
     redirect("/daftar/pilihan");
   }
-  await setCookie(COOKIE, await makeToken([u.id, u.role], secret(), SESSION_MS), SESSION_MS);
+  await setCookie(COOKIE, await makeToken([u.id, u.role, stampOf(u.password_hash)], secret(), SESSION_MS), SESSION_MS);
   redirect(homeOf(u.role));
 }
 
 export async function logout(): Promise<void> {
-  (await cookies()).delete(COOKIE);
+  const jar = await cookies();
+  jar.delete(COOKIE);
+  jar.delete(REG_COOKIE);
   redirect("/login");
 }
 

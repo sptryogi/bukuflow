@@ -9,6 +9,7 @@ export default function DaftarPage() {
   return (
     <div className="auth">
       <div className="card">
+        <Link href="/" className="back-link">← Kembali ke beranda</Link>
         <div className="auth-brand"><Brand /></div>
         <h1 style={{ fontSize: "1.5rem" }}>Daftar Guru</h1>
         <p className="sub">Buat akun untuk mengakses alokasi buku sekolah atau instansi Anda.</p>

@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { COOKIE, REG_COOKIE, readToken } from "./auth";
-import { userById } from "./q";
+import { passwordStamp, userById } from "./q";
 import type { Role, User } from "./types";
 
 const secret = () => process.env.SESSION_SECRET ?? "";
@@ -13,6 +13,7 @@ export async function getSessionUser(): Promise<User | null> {
   if (!p) return null;
   const u = await userById(Number(p[0]));
   if (!u || u.status !== "aktif" || u.role !== p[1]) return null;
+  if (p[2] !== (await passwordStamp(u.id))) return null; // password diganti: sesi lama gugur
   return u;
 }
 

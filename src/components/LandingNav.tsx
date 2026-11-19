@@ -10,6 +10,7 @@ const LINKS = [
   ["#fitur", "Fitur"],
   ["#cara-kerja", "Cara Kerja"],
   ["#faq", "FAQ"],
+  ["#kontak", "Kontak"],
 ] as const;
 
 export default function LandingNav({ home }: { home: string | null }) {

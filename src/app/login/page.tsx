@@ -9,6 +9,7 @@ export default function LoginPage() {
   return (
     <div className="auth">
       <div className="card">
+        <Link href="/" className="back-link">← Kembali ke beranda</Link>
         <div className="auth-brand">
           <Brand />
         </div>

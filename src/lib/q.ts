@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { sql } from "./db";
 import type { Book, Level } from "./engine";
 import type { Program, RosterRow, User } from "./types";
@@ -11,6 +12,13 @@ const PROG_COLS = `id, institution_id, months, weeks, to_char(start_date, 'YYYY-
 export async function userById(id: number): Promise<User | null> {
   const r = await q().query(`SELECT ${USER_COLS} FROM users WHERE id = $1`, [id]);
   return (r[0] as User) ?? null;
+}
+
+/** Cap pendek dari hash password: sesi lama otomatis tidak berlaku bila password diganti. */
+export const stampOf = (passwordHash: string) => createHash("sha256").update(passwordHash).digest("hex").slice(0, 16);
+export async function passwordStamp(id: number): Promise<string | null> {
+  const r = await q().query(`SELECT password_hash FROM users WHERE id = $1`, [id]);
+  return r[0] ? stampOf(r[0].password_hash as string) : null;
 }
 
 export async function userAuthByEmail(email: string): Promise<(User & { password_hash: string }) | null> {
