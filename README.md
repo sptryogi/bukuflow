@@ -155,6 +155,6 @@ Pengaturan: Admin → Ringkasan → Pengaturan (hari buka cetak, batas unggah). 
 ### Setup sekali
 - `npm run db:setup` (menambah tabel asesmen; aman diulang).
 - `npm run db:asesmen` memuat 100 lembar asesmen dari `scripts/asesmen-stock/` ke database (dicocokkan berdasarkan JUDUL). `-- --dry` untuk cek tanpa menyentuh database.
-- Environment Vercel: `ANTHROPIC_API_KEY` (wajib untuk penilaian otomatis), `ANTHROPIC_MODEL` (opsional, default `claude-sonnet-5-5`), `CONTACT_TO` (opsional).
+- Environment Vercel: `DEEPSEEK_API_KEY` (wajib untuk penilaian otomatis), `DEEPSEEK_MODEL` (opsional, default `deepseek-flash`), `CONTACT_TO` (opsional).
 - Stok tambahan/penggantian: Admin → Buku → Stok Asesmen (PDF 1 halaman per judul + rubrik opsional).
 - Foto tidak disimpan (hemat database); hanya nilai dan ringkasan per soal.

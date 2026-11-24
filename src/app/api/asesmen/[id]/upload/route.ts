@@ -43,7 +43,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (user.role === "guru" && (now < w.opens || now > w.closes)) {
     return json({ ok: false, error: now < w.opens ? "Unggah nilai belum dibuka untuk minggu ini." : "Batas unggah minggu ini sudah lewat. Hubungi admin." }, 403);
   }
-  if (!graderReady()) return json({ ok: false, error: "Penilaian otomatis belum aktif (ANTHROPIC_API_KEY). Isi nilai manual di tabel." }, 503);
+  if (!graderReady()) return json({ ok: false, error: "Penilaian otomatis belum aktif (DEEPSEEK_API_KEY). Isi nilai manual di tabel." }, 503);
   if (!(await throttle(`grade:${user.id}`, 800, 3600))) return json({ ok: false, error: "Terlalu banyak unggahan dalam satu jam." }, 429);
 
   const buf = Buffer.from(await file.arrayBuffer());
