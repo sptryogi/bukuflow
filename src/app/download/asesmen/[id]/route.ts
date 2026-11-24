@@ -51,7 +51,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     }
     let src = docs.get(r.book_id!);
     if (!src) docs.set(r.book_id!, (src = await openTemplate(b64)));
-    files.push({ name: `${safe(r.nis, 20)}_${safe(r.name)}_Minggu${gw}.pdf`, data: await stampSheet(src, { nis: r.nis, name: r.name, date }) });
+    files.push({ name: `${safe(r.nis, 20)}_${safe(r.name)}_Minggu${gw}.pdf`, data: await stampSheet(src, { nis: r.nis, name: r.name, level: r.level, date }) });
   }
   if (!files.length) return new Response(only ? "Template asesmen untuk judul murid ini belum tersedia." : "Belum ada template asesmen untuk judul minggu ini.", { status: 404 });
 

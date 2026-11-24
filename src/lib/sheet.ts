@@ -11,7 +11,7 @@ function fitSize(font: PDFFont, text: string, size: number, max: number, min = 6
   return s;
 }
 
-export type SheetFields = { nis: string; name: string; date: string };
+export type SheetFields = { nis: string; name: string; date: string; level?: string };
 
 export async function openTemplate(b64: string): Promise<PDFDocument> {
   return PDFDocument.load(Buffer.from(b64, "base64"));
@@ -36,6 +36,7 @@ export async function stampSheet(src: PDFDocument, f: SheetFields): Promise<Uint
   };
   put(f.name, 86, 88.4, 458, 11);          // garis Nama: x 84-547
   put(f.nis, 75.5, 111.4, 68, 10);          // garis NIS: x 73-146
+  if (f.level) put(f.level, 315, 111.4, 59, 10); // garis Level: x 313-376
   put(f.date, 437.5, 111.4, 108, 10);       // garis Tanggal: x 436-547
   return out.save();
 }
