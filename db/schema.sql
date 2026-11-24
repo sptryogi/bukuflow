@@ -125,3 +125,25 @@ CREATE INDEX IF NOT EXISTS assessment_downloads_prog_idx ON assessment_downloads
 
 INSERT INTO settings (key, value) VALUES ('assess_print_day', '3') ON CONFLICT (key) DO NOTHING;
 INSERT INTO settings (key, value) VALUES ('assess_deadline_hours', '6') ON CONFLICT (key) DO NOTHING;
+
+-- Antrean penilaian latar belakang: foto/halaman PDF yang diunggah menunggu dibaca & dinilai AI.
+CREATE TABLE IF NOT EXISTS assessment_queue (
+  id serial PRIMARY KEY,
+  program_id int NOT NULL REFERENCES programs (id) ON DELETE CASCADE,
+  week int NOT NULL,
+  student_id int,
+  image_b64 text,
+  media_type text NOT NULL,
+  label text,
+  status text NOT NULL DEFAULT 'menunggu' CHECK (status IN ('menunggu', 'diproses', 'selesai', 'perlu_cek', 'gagal')),
+  attempts int NOT NULL DEFAULT 0,
+  result_student int,
+  score numeric(5, 1),
+  note text,
+  uploaded_by int REFERENCES users (id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  started_at timestamptz,
+  finished_at timestamptz
+);
+CREATE INDEX IF NOT EXISTS assessment_queue_idx ON assessment_queue (status, id);
+CREATE INDEX IF NOT EXISTS assessment_queue_prog_idx ON assessment_queue (program_id, week);

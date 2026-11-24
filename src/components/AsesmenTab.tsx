@@ -10,7 +10,33 @@ type Data = {
   settings: { printDay: number; deadlineHours: number };
   downloads: { week: number; kind: string; items: number; at: string; who: string | null }[] | null;
 };
-type Log = { id: number; name: string; state: "proses" | "ok" | "cek" | "gagal"; text: string };
+type Log = { id: number; name: string; state: "proses" | "ok" | "gagal"; text: string };
+type QS = { stat: { menunggu: number; diproses: number; selesai: number; perlu_cek: number; gagal: number }; failed: { id: number; label: string | null; note: string | null }[] };
+
+const isPdf = (f: File) => f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+
+/** Buka PDF (1 file = banyak halaman) di browser; tiap halaman dirender jadi JPEG saat dibutuhkan (hemat memori). */
+async function openPdf(file: File) {
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  return {
+    n: doc.numPages,
+    async page(i: number): Promise<Blob> {
+      const pg = await doc.getPage(i);
+      const v1 = pg.getViewport({ scale: 1 });
+      const vp = pg.getViewport({ scale: Math.min(3, 1800 / Math.max(v1.width, v1.height)) });
+      const c = document.createElement("canvas");
+      c.width = Math.round(vp.width);
+      c.height = Math.round(vp.height);
+      await pg.render({ canvasContext: c.getContext("2d")!, viewport: vp }).promise;
+      const b = await new Promise<Blob | null>((r) => c.toBlob(r, "image/jpeg", 0.85));
+      pg.cleanup();
+      if (!b) throw new Error("render");
+      return b;
+    },
+  };
+}
 
 const wib = (ms: number) =>
   new Date(ms).toLocaleString("id-ID", { timeZone: "Asia/Jakarta", weekday: "long", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).replace(".", ":") + " WIB";
@@ -69,6 +95,9 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
   const seq = useRef(0);
+  const pollUntil = useRef(0);
+  const [qs, setQs] = useState<QS | null>(null);
+  const [okMsg, setOkMsg] = useState("");
 
   const load = useCallback(async (w?: number | null) => {
     try {
@@ -85,6 +114,25 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
 
   useEffect(() => { void load(null); }, [load]);
 
+  const loadQ = useCallback(async () => {
+    if (!admin || week === null) return;
+    try {
+      const r = await fetch(`/api/asesmen/${programId}/queue?week=${week}`, { cache: "no-store" });
+      if (r.ok) setQs((await r.json()) as QS);
+    } catch { /* abaikan, coba lagi pada putaran berikutnya */ }
+  }, [admin, programId, week]);
+
+  // Segarkan berkala: admin melihat progres antrean; semua pengguna melihat nilai yang masuk setelah unggah.
+  useEffect(() => {
+    if (week === null) return;
+    void loadQ();
+    const t = setInterval(() => {
+      void loadQ();
+      if (Date.now() < pollUntil.current || (admin && qs && (qs.stat.menunggu > 0 || qs.stat.diproses > 0))) void load(week);
+    }, 8000);
+    return () => clearInterval(t);
+  }, [week, admin, load, loadQ, qs]);
+
   if (err) return <div className="notice err">{err}</div>;
   if (!d || week === null) return <p className="muted">Memuat…</p>;
   const cur = d.weeks.find((x) => x.week === week);
@@ -98,33 +146,59 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
 
   async function sendAll(files: File[], studentId?: number) {
     setBusy(true);
+    setOkMsg("");
+    // Kembangkan PDF menjadi halaman-halaman; foto jadi 1 item. Halaman dirender/diperkecil saat giliran dikirim.
+    type Item = { name: string; get: () => Promise<Blob> };
+    const items: Item[] = [];
+    const bad: string[] = [];
+    for (const f of files) {
+      if (isPdf(f)) {
+        try {
+          const pdf = await openPdf(f);
+          const n = studentId ? 1 : pdf.n; // unggah untuk 1 murid: cukup halaman pertama
+          for (let i = 1; i <= n; i++) items.push({ name: pdf.n > 1 ? `${f.name} hal ${i}` : f.name, get: () => pdf.page(i) });
+        } catch {
+          bad.push(f.name);
+        }
+      } else items.push({ name: f.name, get: () => shrink(f) });
+    }
     const base = seq.current;
-    seq.current += files.length;
-    setLog((l) => [...files.map((f, i) => ({ id: base + i, name: f.name, state: "proses" as const, text: "Membaca…" })), ...l]);
+    seq.current += items.length + bad.length;
+    setLog((l) => [
+      ...bad.map((n, i) => ({ id: base + items.length + i, name: n, state: "gagal" as const, text: "PDF tidak dapat dibuka." })),
+      ...items.map((f, i) => ({ id: base + i, name: f.name, state: "proses" as const, text: "Mengunggah…" })),
+      ...l,
+    ]);
     let next = 0;
+    let okN = 0;
     const worker = async () => {
-      while (next < files.length) {
+      while (next < items.length) {
         const i = next++;
         let upd: Pick<Log, "state" | "text">;
         try {
           const fd = new FormData();
           fd.set("week", String(week));
-          fd.set("file", await shrink(files[i]), "scan.jpg");
+          fd.set("label", items[i].name);
+          fd.set("file", await items[i].get(), "scan.jpg");
           if (studentId) fd.set("student", String(studentId));
           const res = await fetch(`/api/asesmen/${programId}/upload`, { method: "POST", body: fd });
-          const j = await res.json().catch(() => ({ ok: false, error: `Gagal (kode ${res.status}). Coba foto lebih kecil.` }));
-          upd = j.ok
-            ? { state: j.status === "perlu_cek" ? "cek" : "ok", text: `${j.student.nis} ${j.student.name}: nilai ${j.score}${j.status === "perlu_cek" ? ` (perlu dicek: ${j.note})` : ""}` }
-            : { state: "gagal", text: j.error };
+          const j = await res.json().catch(() => ({ ok: false, error: `Gagal (kode ${res.status}). Coba file lebih kecil.` }));
+          if (j.ok) okN++;
+          upd = j.ok ? { state: "ok", text: "Diterima" } : { state: "gagal", text: j.error };
         } catch {
           upd = { state: "gagal", text: "Koneksi terputus." };
         }
         setLog((l) => l.map((x) => (x.id === base + i ? { ...x, ...upd } : x)));
       }
     };
-    await Promise.all([worker(), worker()]);
+    await Promise.all([worker(), worker(), worker()]);
     setBusy(false);
+    if (okN) {
+      setOkMsg(`Unggah berhasil: ${okN} lembar diterima. Penilaian berjalan di latar belakang; nilai muncul di tabel setelah selesai.${admin ? "" : " Anda boleh menutup halaman ini."}`);
+      pollUntil.current = Date.now() + 20 * 60_000;
+    }
     await load(week);
+    void loadQ();
   }
 
   return (
@@ -164,25 +238,59 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
       <div className="card">
         <h2>2. Unggah hasil</h2>
         <p className="muted small">
-          Foto/scan <strong>satu lembar per file</strong> (JPG/PNG), boleh banyak sekaligus. Sistem membaca NIS di kertas untuk mencocokkan murid.{" "}
+          Unggah foto/scan (JPG/PNG) <strong>atau PDF</strong>: satu file per murid, atau <strong>satu PDF berisi banyak halaman</strong> (satu halaman = satu murid). Boleh banyak file sekaligus. Sistem membaca NIS di kertas untuk mencocokkan murid, lalu menilai di latar belakang.{" "}
           {admin ? "Admin tidak dibatasi waktu." : <>Unggah dibuka sampai <strong>{wib(cur.closes)}</strong>.</>}
         </p>
         {!d.graderReady && <div className="notice warn">Penilaian otomatis belum diaktifkan admin. Nilai tetap bisa diisi manual pada tabel di bawah.</div>}
         <label className={`btn ${canUpload && d.graderReady && !busy ? "primary" : ""}`} style={canUpload && d.graderReady ? undefined : { opacity: 0.5, pointerEvents: "none" }}>
-          {busy ? "Memproses…" : "Pilih foto / scan"}
-          <input type="file" accept="image/*" multiple hidden disabled={busy || !canUpload || !d.graderReady} onChange={(e) => { const f = Array.from(e.target.files ?? []); e.target.value = ""; if (f.length) void sendAll(f); }} />
+          {busy ? "Mengunggah…" : "Pilih foto / scan / PDF"}
+          <input type="file" accept="image/*,application/pdf" multiple hidden disabled={busy || !canUpload || !d.graderReady} onChange={(e) => { const f = Array.from(e.target.files ?? []); e.target.value = ""; if (f.length) void sendAll(f); }} />
         </label>
         {!canUpload && <span className="muted small"> {cur.state === "belum" ? "Belum dibuka." : "Batas unggah sudah lewat (hubungi admin)."}</span>}
+        {okMsg && <div className="notice ok" style={{ marginTop: 10 }}>✅ {okMsg}</div>}
         {log.length > 0 && (
           <ul className="small" style={{ margin: "10px 0 0", paddingLeft: 18 }}>
-            {log.slice(0, 40).map((x) => (
-              <li key={x.id} style={{ color: x.state === "gagal" ? "var(--danger)" : x.state === "cek" ? "var(--warn)" : undefined }}>
-                {x.state === "proses" ? "⏳" : x.state === "ok" ? "✅" : x.state === "cek" ? "⚠️" : "❌"} <span className="muted">{x.name}</span> · {x.text}
+            {log.slice(0, 15).map((x) => (
+              <li key={x.id} style={{ color: x.state === "gagal" ? "var(--danger)" : undefined }}>
+                {x.state === "proses" ? "⏳" : x.state === "ok" ? "✅" : "❌"} <span className="muted">{x.name}</span> · {x.text}
               </li>
             ))}
           </ul>
         )}
       </div>
+
+      {admin && qs && qs.stat.menunggu + qs.stat.diproses + qs.stat.selesai + qs.stat.perlu_cek + qs.stat.gagal > 0 && (() => {
+        const s = qs.stat;
+        const all = s.menunggu + s.diproses + s.selesai + s.perlu_cek + s.gagal;
+        const done = s.selesai + s.perlu_cek + s.gagal;
+        const pct = Math.round((done / all) * 100);
+        return (
+          <div className="card">
+            <h2>Progres penilaian · Minggu ke-{cur.global}</h2>
+            <div style={{ height: 10, borderRadius: 99, background: "var(--line, #e5e7eb)", overflow: "hidden", margin: "6px 0 8px" }}>
+              <div style={{ width: `${pct}%`, height: "100%", background: "var(--primary, #4361ee)", transition: "width .4s" }} />
+            </div>
+            <p className="small" style={{ margin: 0 }}>
+              <strong>{done}</strong> dari <strong>{all}</strong> lembar selesai diproses ({pct}%){s.menunggu + s.diproses > 0 ? " · berjalan di latar belakang" : " · selesai"}
+            </p>
+            <div className="chips" style={{ marginTop: 8 }}>
+              <span className="pill info">Menunggu {s.menunggu}</span>
+              <span className="pill info">Diproses {s.diproses}</span>
+              <span className="pill ok">Terbaca {s.selesai}</span>
+              <span className="pill warn">Perlu dicek {s.perlu_cek}</span>
+              <span className="pill" style={s.gagal ? { color: "var(--danger)" } : undefined}>Gagal {s.gagal}</span>
+            </div>
+            {qs.failed.length > 0 && (
+              <>
+                <ul className="small" style={{ margin: "10px 0 6px", paddingLeft: 18 }}>
+                  {qs.failed.slice(0, 10).map((f) => <li key={f.id} style={{ color: "var(--danger)" }}><span className="muted">{f.label ?? `#${f.id}`}</span> · {f.note}</li>)}
+                </ul>
+                <button className="btn sm" onClick={async () => { await fetch(`/api/asesmen/${programId}/queue?week=${week}`, { method: "POST" }); void loadQ(); }}>Proses ulang yang gagal</button>
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       <div className="card">
         <div className="row between" style={{ marginBottom: 8 }}>
@@ -210,7 +318,7 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
                     {r.book_id && (
                       <label className="btn sm" style={canUpload && d.graderReady && !busy ? undefined : { opacity: 0.5, pointerEvents: "none" }}>
                         Foto
-                        <input type="file" accept="image/*" hidden disabled={busy || !canUpload || !d.graderReady} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void sendAll([f], r.student_id); }} />
+                        <input type="file" accept="image/*,application/pdf" hidden disabled={busy || !canUpload || !d.graderReady} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void sendAll([f], r.student_id); }} />
                       </label>
                     )}
                   </td>

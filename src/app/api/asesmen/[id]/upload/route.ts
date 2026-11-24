@@ -1,7 +1,8 @@
 import { actor } from "@/lib/session";
-import { programFor, saveResult, templateOf, weekRows, windowOf, type SheetRow } from "@/lib/asesmen";
-import { gradeScan, graderReady } from "@/lib/grader";
-import { matchStudent, titleMatches } from "@/lib/gradeParse";
+import { after } from "next/server";
+import { programFor, weekRows, windowOf } from "@/lib/asesmen";
+import { graderReady } from "@/lib/grader";
+import { enqueue, runAndChain } from "@/lib/queue";
 import { throttle } from "@/lib/q";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,7 @@ function mediaType(b: Buffer): string | null {
 
 const json = (body: object, status = 200) => Response.json(body, { status });
 
-/** POST multipart: week, file (foto/scan 1 lembar), student (opsional). Membaca & menilai langsung. */
+/** POST multipart: week, file (foto/scan 1 lembar), student (opsional). Disimpan ke antrean, dinilai di latar belakang. */
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   let user;
   try {
@@ -50,29 +51,16 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const mt = mediaType(buf);
   if (!mt) return json({ ok: false, error: "Format harus JPG, PNG, atau WEBP." }, 415);
 
-  const rows = (await weekRows(p.id, week)).filter((r) => r.book_id);
-  let target: SheetRow | null = only ? rows.find((r) => r.student_id === only) ?? null : null;
-  if (only && !target) return json({ ok: false, error: "Murid ini tidak punya buku di minggu tersebut." }, 400);
-
-  // Judul untuk penilaian: murid sudah diketahui -> bukunya; belum -> baca NIS dulu dari kertas (judul acuan sementara kosong).
-  const probe = target ?? null;
-  const first = await gradeScan(buf, mt, probe?.title ?? null, probe ? (await templateOf(probe.book_id!))?.rubric ?? null : null);
-  if (!first.ok) return json({ ok: false, error: first.error }, 502);
-  let grade = first.grade;
-
-  if (!target) {
-    const hit = matchStudent(rows.map((r) => ({ id: r.student_id, nis: r.nis, name: r.name })), grade.nis, grade.nama);
-    target = hit ? rows.find((r) => r.student_id === hit.id) ?? null : null;
-    if (!target) return json({ ok: false, error: `NIS/nama pada kertas${grade.nis ? ` (${grade.nis})` : ""} tidak cocok dengan murid yang menerima asesmen minggu ini.` }, 422);
-    // Nilai ulang dengan judul & rubrik yang benar bila perlu (judul terbaca dari kertas berbeda).
-    if (!titleMatches(grade.judul, target.title!)) {
-      grade = { ...grade, perluCek: true, alasan: `Judul di kertas "${grade.judul}" berbeda dari alokasi "${target.title}". ${grade.alasan}`.trim() };
-    }
-  } else if (grade.nis && grade.nis.replace(/\W/g, "") !== target.nis.replace(/\W/g, "")) {
-    grade = { ...grade, perluCek: true, alasan: `NIS di kertas (${grade.nis}) berbeda dari ${target.nis}. ${grade.alasan}`.trim() };
+  let studentId: number | null = null;
+  if (only) {
+    const rows = await weekRows(p.id, week);
+    if (!rows.some((r) => r.student_id === only && r.book_id)) return json({ ok: false, error: "Murid ini tidak punya buku di minggu tersebut." }, 400);
+    studentId = only;
   }
 
-  const status = grade.perluCek ? "perlu_cek" : "dinilai";
-  await saveResult(p.id, target.student_id, week, grade.total, status, { soal: grade.soal, alasan: grade.alasan, dibaca: { nis: grade.nis, nama: grade.nama, judul: grade.judul } }, user.id);
-  return json({ ok: true, student: { id: target.student_id, nis: target.nis, name: target.name }, score: grade.total, status, note: grade.alasan });
+  // Hanya disimpan; pembacaan & penilaian dikerjakan di latar belakang (lib/queue.ts).
+  await enqueue({ programId: p.id, week, studentId, b64: buf.toString("base64"), mediaType: mt, label: String(fd.get("label") || file.name || "scan").slice(0, 120), userId: user.id });
+  const origin = new URL(req.url).origin;
+  after(() => runAndChain(origin));
+  return json({ ok: true, queued: true });
 }
