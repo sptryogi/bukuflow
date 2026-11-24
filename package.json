@@ -8,11 +8,13 @@
     "start": "next start",
     "db:setup": "node --env-file=.env.local scripts/setup-db.mjs",
     "db:reset": "node --env-file=.env.local scripts/setup-db.mjs --reset",
-    "test": "node --experimental-strip-types scripts/test-engine.ts"
+    "test": "node --experimental-strip-types scripts/test-engine.ts && node --experimental-strip-types scripts/test-asesmen.ts",
+    "db:asesmen": "node --env-file=.env.local scripts/load-asesmen.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.0",
     "exceljs": "^4.4.0",
+    "fflate": "^0.8.2",
     "next": "^15.5.0",
     "pdf-lib": "^1.17.1",
     "react": "^19.0.0",

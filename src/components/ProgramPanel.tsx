@@ -4,10 +4,11 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui";
 import ProgressBar from "@/components/ProgressBar";
 import RosterUpload from "@/components/RosterUpload";
+import AsesmenTab from "@/components/AsesmenTab";
 import { LEVELS, type Level } from "@/lib/engine";
 import { PHASE_LABEL, addDays, dayName, fmtDate, type Phase } from "@/lib/schedule";
 
-type Tab = "saat_ini" | "tabel" | "minggu" | "unduh" | "murid";
+type Tab = "saat_ini" | "tabel" | "minggu" | "unduh" | "asesmen" | "murid";
 export type PanelProps = {
   role: "admin" | "guru";
   program: { id: number; months: number; weeks: number; start_date: string; week_offset: number; status: string; alloc_error: string | null };
@@ -85,7 +86,7 @@ export default function ProgramPanel(p: PanelProps) {
       </div>
 
       <div className="tabs" role="tablist">
-        {([["saat_ini", "Saat ini"], ["tabel", "Tabel alokasi"], ["minggu", "Per minggu"], ["unduh", "Unduh"], ["murid", "Data murid"]] as const).map(([k, l]) => (
+        {([["saat_ini", "Saat ini"], ["tabel", "Tabel alokasi"], ["minggu", "Per minggu"], ["unduh", "Unduh"], ["asesmen", "Asesmen"], ["murid", "Data murid"]] as const).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={tab === k} className={`tab ${tab === k ? "on" : ""}`} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
@@ -221,6 +222,8 @@ export default function ProgramPanel(p: PanelProps) {
           )}
         </div>
       )}
+
+      {tab === "asesmen" && (needsData ? <div className="notice warn">Unggah data murid dulu agar asesmen dapat dibuat.</div> : <AsesmenTab programId={program.id} admin={admin} />)}
 
       {tab === "murid" && (
         <RosterUpload programId={program.id} institutionId={p.institution.id} hasRoster={roster.length > 0} running={program.status === "siap" && released > 0} copyFrom={roster.length === 0 ? p.copyFrom : null} />

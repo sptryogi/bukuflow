@@ -18,7 +18,7 @@ export async function loadPanel(
   const titles: Record<number, string> = {};
   for (const b of books) if (used.has(b.id)) titles[b.id] = b.title;
   const from = siblings.find((s) => s.id !== p.id && s.students > 0);
-  const tabs = ["saat_ini", "tabel", "minggu", "unduh", "murid"];
+  const tabs = ["saat_ini", "tabel", "minggu", "unduh", "asesmen", "murid"];
   return {
     role,
     program: { id: p.id, months: p.months, weeks: p.weeks, start_date: p.start_date, week_offset: p.week_offset, status: p.status, alloc_error: p.alloc_error },

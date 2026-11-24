@@ -175,4 +175,24 @@ export async function setMaxStudents(n: number): Promise<void> {
   );
 }
 
+/** Pengaturan jadwal asesmen: hari buka cetak (hari ke-N sesudah rilis minggu) dan batas unggah (jam sesudah rilis berikutnya). */
+export async function getAssessSettings(): Promise<{ printDay: number; deadlineHours: number }> {
+  try {
+    const r = await q().query(`SELECT key, value FROM settings WHERE key IN ('assess_print_day', 'assess_deadline_hours')`);
+    const m = new Map(r.map((x) => [x.key as string, Number(x.value)]));
+    const d = m.get("assess_print_day");
+    const h = m.get("assess_deadline_hours");
+    return { printDay: Number.isInteger(d) && d! >= 0 && d! <= 6 ? d! : 3, deadlineHours: Number.isInteger(h) && h! >= 0 && h! <= 72 ? h! : 6 };
+  } catch {
+    return { printDay: 3, deadlineHours: 6 };
+  }
+}
+
+export async function setAssessSettings(printDay: number, deadlineHours: number): Promise<void> {
+  await q().query(`CREATE TABLE IF NOT EXISTS settings (key text PRIMARY KEY, value text NOT NULL)`);
+  for (const [k, v] of [["assess_print_day", printDay], ["assess_deadline_hours", deadlineHours]] as const) {
+    await q().query(`INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`, [k, String(v)]);
+  }
+}
+
 export type { Level };

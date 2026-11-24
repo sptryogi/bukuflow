@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/session";
-import { allProgramsBrief, getMaxStudents, listGurus, listInstitutionOptions } from "@/lib/q";
+import { allProgramsBrief, getAssessSettings, getMaxStudents, listGurus, listInstitutionOptions } from "@/lib/q";
 import { programState } from "@/lib/view";
 import ProfileCard from "@/components/ProfileCard";
 import SettingsCard from "@/components/SettingsCard";
 
 export default async function AdminHome() {
   const me = await requireRole("admin");
-  const [gurus, insts, programs, maxStudents] = await Promise.all([listGurus(), listInstitutionOptions(), allProgramsBrief(), getMaxStudents()]);
+  const [gurus, insts, programs, maxStudents, assess] = await Promise.all([listGurus(), listInstitutionOptions(), allProgramsBrief(), getMaxStudents(), getAssessSettings()]);
   const pending = gurus.filter((g) => g.status.startsWith("menunggu")).length;
   const running = programs.filter((p) => programState({ status: p.status, start_date: p.start_date, weeks: p.weeks, months: p.weeks / 4 }).phase === "berjalan").length;
   const waiting = programs.filter((p) => p.status === "menunggu_data").length;
@@ -24,7 +24,7 @@ export default async function AdminHome() {
         <div className="stat"><div className="k">Program berjalan</div><div className="v">{running}</div></div>
         <div className="stat"><div className="k">Program menunggu data murid</div><div className="v">{waiting}</div></div>
       </div>
-      <SettingsCard maxStudents={maxStudents} />
+      <SettingsCard maxStudents={maxStudents} printDay={assess.printDay} deadlineHours={assess.deadlineHours} />
       <ProfileCard user={me} />
     </>
   );

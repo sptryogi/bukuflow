@@ -1,7 +1,7 @@
 "use server";
 
 import { sql } from "@/lib/db";
-import { getInstitution, getProgram, findOrCreateInstitution, normName, programRoster, setMaxStudents, userById } from "@/lib/q";
+import { getInstitution, getProgram, findOrCreateInstitution, normName, programRoster, setAssessSettings, setMaxStudents, userById } from "@/lib/q";
 import { persistProgram } from "@/lib/build";
 import { LEVELS, type Level } from "@/lib/engine";
 import { addDays, releasedWeeks, resolveStart, WEEKS_PER_MONTH } from "@/lib/schedule";
@@ -206,8 +206,12 @@ export async function saveSettings(fd: FormData): Promise<Result> {
   return asAdmin(async () => {
     const n = toInt(fd.get("max_students"), 1, 5000);
     if (!n) return fail("Maksimal murid harus berupa angka 1 sampai 5000.");
+    const day = toInt(fd.get("assess_print_day"), 0, 6);
+    const hours = toInt(fd.get("assess_deadline_hours"), 0, 72);
+    if (day === null || hours === null) return fail("Hari buka cetak harus 0-6 dan batas unggah 0-72 jam.");
     await setMaxStudents(n);
+    await setAssessSettings(day, hours);
     refresh();
-    return ok(`Maksimal murid per program diubah menjadi ${n}.`);
+    return ok("Pengaturan disimpan.");
   });
 }

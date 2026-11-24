@@ -140,3 +140,21 @@ scripts/       setup-db.mjs, test-engine.ts
 src/lib/       engine.ts (alokasi), schedule.ts (jadwal WIB), build.ts (simpan atomik), q.ts, auth, email, excel, pdf
 src/app/       admin/, guru/, login, daftar, verifikasi, download/, actions/
 ```
+
+
+## Asesmen membaca (cetak lembar, unggah foto, nilai otomatis)
+
+Alur tiap minggu, per murid, sesuai buku yang dialokasikan minggu itu:
+
+1. **Kamis** (bisa diatur): guru buka program → tab **Asesmen** → *Unduh semua (ZIP)*. Satu murid satu PDF; yang terisi otomatis hanya NIS, Nama, Tanggal (kolom Kelas dan penghitung halaman dihapus). Unduhan tercatat dan terlihat admin.
+2. **Jumat sampai Senin 08.00 WIB** (bisa diatur): guru foto/scan lembar yang sudah dijawab, unggah (boleh banyak file sekaligus). Penilai AI membaca NIS di kertas, mencocokkan murid, dan memberi nilai 0-100 (10 soal x 10). Hasil yang meragukan ditandai *Perlu dicek*. Nilai bisa dikoreksi manual.
+3. Tab Asesmen → **Riwayat nilai** (Excel/PDF): NIS, Nama, Level, lalu satu kolom per minggu yang sudah bernilai.
+
+Pengaturan: Admin → Ringkasan → Pengaturan (hari buka cetak, batas unggah). Untuk uji coba isi hari buka cetak **0**.
+
+### Setup sekali
+- `npm run db:setup` (menambah tabel asesmen; aman diulang).
+- `npm run db:asesmen` memuat 100 lembar asesmen dari `scripts/asesmen-stock/` ke database (dicocokkan berdasarkan JUDUL). `-- --dry` untuk cek tanpa menyentuh database.
+- Environment Vercel: `ANTHROPIC_API_KEY` (wajib untuk penilaian otomatis), `ANTHROPIC_MODEL` (opsional, default `claude-sonnet-5-5`), `CONTACT_TO` (opsional).
+- Stok tambahan/penggantian: Admin → Buku → Stok Asesmen (PDF 1 halaman per judul + rubrik opsional).
+- Foto tidak disimpan (hemat database); hanya nilai dan ringkasan per soal.

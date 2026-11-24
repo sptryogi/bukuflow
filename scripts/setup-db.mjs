@@ -19,7 +19,7 @@ const statements = (file) =>
 
 if (process.argv.includes("--reset")) {
   console.log("Menghapus tabel lama...");
-  await sql.query("DROP TABLE IF EXISTS throttle, allocations, program_students, programs, students, users, books, institutions, settings CASCADE");
+  await sql.query("DROP TABLE IF EXISTS assessment_downloads, assessment_results, assessment_templates, throttle, allocations, program_students, programs, students, users, books, institutions, settings CASCADE");
 }
 
 for (const file of ["schema.sql", "seed.sql"]) {

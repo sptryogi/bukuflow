@@ -9,7 +9,7 @@ export default function ContactForm() {
     <form className="contact-form" action={action}>
       <h3>Kirim Pesan</h3>
       <p className="muted small">Pesan diteruskan ke tim kami melalui email.</p>
-      <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hp" />
+      <input type="text" name="hp_cek" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hp" />
       <label className="f" htmlFor="cf-nama">Nama Lengkap</label>
       <input id="cf-nama" name="nama" className="input" autoComplete="name" placeholder="Nama Anda" required maxLength={100} />
       <label className="f" htmlFor="cf-email">Email</label>

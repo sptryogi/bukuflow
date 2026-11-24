@@ -90,3 +90,38 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 
 INSERT INTO settings (key, value) VALUES ('max_students', '300') ON CONFLICT (key) DO NOTHING;
+
+-- Asesmen membaca: template PDF per judul (1 halaman), hasil nilai per murid per minggu, log unduhan.
+CREATE TABLE IF NOT EXISTS assessment_templates (
+  book_id int PRIMARY KEY REFERENCES books (id) ON DELETE CASCADE,
+  pdf_b64 text NOT NULL,
+  rubric text,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS assessment_results (
+  program_id int NOT NULL REFERENCES programs (id) ON DELETE CASCADE,
+  student_id int NOT NULL REFERENCES students (id) ON DELETE CASCADE,
+  week int NOT NULL CHECK (week >= 1),
+  score numeric(5, 1) NOT NULL CHECK (score >= 0 AND score <= 100),
+  status text NOT NULL DEFAULT 'dinilai' CHECK (status IN ('dinilai', 'perlu_cek', 'manual')),
+  detail jsonb,
+  uploaded_by int REFERENCES users (id) ON DELETE SET NULL,
+  uploaded_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (program_id, student_id, week)
+);
+
+CREATE TABLE IF NOT EXISTS assessment_downloads (
+  id serial PRIMARY KEY,
+  program_id int NOT NULL REFERENCES programs (id) ON DELETE CASCADE,
+  week int NOT NULL,
+  user_id int REFERENCES users (id) ON DELETE SET NULL,
+  kind text NOT NULL,
+  items int NOT NULL DEFAULT 0,
+  downloaded_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS assessment_downloads_prog_idx ON assessment_downloads (program_id, downloaded_at DESC);
+
+INSERT INTO settings (key, value) VALUES ('assess_print_day', '3') ON CONFLICT (key) DO NOTHING;
+INSERT INTO settings (key, value) VALUES ('assess_deadline_hours', '6') ON CONFLICT (key) DO NOTHING;

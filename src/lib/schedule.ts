@@ -87,3 +87,17 @@ export function resolveStart(kind: string, month: string, nowMs: number): string
 export function dayName(ymd: string): string {
   return new Date(parse(ymd)).toLocaleDateString("id-ID", { weekday: "long", timeZone: "UTC" });
 }
+
+/**
+ * Jendela asesmen minggu ke-`week` (lokal 1..n): cetak dibuka `printDay` hari setelah rilis minggu itu
+ * (3 = Kamis bila mulai Senin, 02:00 WIB); unggah ditutup `deadlineHours` jam setelah rilis minggu berikutnya
+ * (6 = Senin 08:00 WIB). Untuk minggu terakhir, "rilis berikutnya" = hari ke-8 setelah rilis minggu itu.
+ */
+export function assessWindow(startYmd: string, week: number, printDay: number, deadlineHours: number): { opens: number; closes: number } {
+  return { opens: releaseMs(startYmd, week) + printDay * DAY, closes: releaseMs(startYmd, week + 1) + deadlineHours * 3_600_000 };
+}
+
+/** Tanggal ringkas untuk lembar asesmen, mis. "26 Nov 2026" (WIB). */
+export function sheetDate(nowMs: number): string {
+  return new Date(nowMs).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" });
+}

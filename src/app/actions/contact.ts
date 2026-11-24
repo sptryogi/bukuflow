@@ -10,7 +10,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 export async function sendContact(_prev: State, fd: FormData): Promise<State> {
-  if (String(fd.get("website") ?? "")) return { ok: true, message: "Pesan terkirim." }; // honeypot
+  if (String(fd.get("hp_cek") ?? "")) return { ok: true, message: "Pesan terkirim." }; // honeypot
   const name = String(fd.get("nama") ?? "").trim();
   const email = String(fd.get("email") ?? "").trim();
   const school = String(fd.get("sekolah") ?? "").trim();

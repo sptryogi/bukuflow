@@ -110,21 +110,24 @@ export type GridInput = {
   title: (studentId: number, globalWeek: number) => string;
 };
 
-export async function buildResultXlsx(g: GridInput): Promise<Buffer> {
+export async function buildResultXlsx(g: GridInput, opt: { sheet?: string; numeric?: boolean; weekWidth?: number } = {}): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet("Alokasi", { views: [{ state: "frozen", xSplit: 3, ySplit: 1 }] });
+  const ws = wb.addWorksheet(opt.sheet ?? "Alokasi", { views: [{ state: "frozen", xSplit: 3, ySplit: 1 }] });
   ws.columns = [
     { header: "NIS", key: "nis", width: 16 },
     { header: "Nama Murid", key: "name", width: 30 },
     { header: "Level", key: "level", width: 12 },
-    ...g.weeks.map((w) => ({ header: `Minggu ke-${w}`, key: `w${w}`, width: 34 })),
+    ...g.weeks.map((w) => ({ header: `Minggu ke-${w}`, key: `w${w}`, width: opt.weekWidth ?? 34 })),
   ];
   const head = ws.getRow(1);
   head.font = { bold: true, color: { argb: "FFFFFFFF" } };
   head.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0F766E" } };
   for (const s of g.students) {
-    const row: Record<string, string> = { nis: s.nis, name: s.name, level: s.level };
-    for (const w of g.weeks) row[`w${w}`] = g.title(s.id, w);
+    const row: Record<string, string | number> = { nis: s.nis, name: s.name, level: s.level };
+    for (const w of g.weeks) {
+      const t = g.title(s.id, w);
+      row[`w${w}`] = opt.numeric && t !== "" ? Number(t) : t;
+    }
     ws.addRow(row);
   }
   ws.getColumn(1).numFmt = "@";
