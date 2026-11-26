@@ -147,3 +147,39 @@ CREATE TABLE IF NOT EXISTS assessment_queue (
 );
 CREATE INDEX IF NOT EXISTS assessment_queue_idx ON assessment_queue (status, id);
 CREATE INDEX IF NOT EXISTS assessment_queue_prog_idx ON assessment_queue (program_id, week);
+
+-- Kunci jawaban: 10 soal per judul (pertanyaan + ekspektasi jawaban), diimpor dari Excel (npm run db:kunci).
+CREATE TABLE IF NOT EXISTS assessment_keys (
+  book_id int NOT NULL REFERENCES books (id) ON DELETE CASCADE,
+  no int NOT NULL CHECK (no BETWEEN 1 AND 10),
+  question text NOT NULL,
+  expected text NOT NULL,
+  PRIMARY KEY (book_id, no)
+);
+
+-- Lembar jawaban murid per minggu: scan asli, transkrip OCR, jawaban hasil edit guru, nilai & evaluasi.
+CREATE TABLE IF NOT EXISTS assessment_sheets (
+  id serial PRIMARY KEY,
+  program_id int NOT NULL REFERENCES programs (id) ON DELETE CASCADE,
+  student_id int NOT NULL REFERENCES students (id) ON DELETE CASCADE,
+  week int NOT NULL,
+  is_test boolean NOT NULL DEFAULT false,
+  book_id int,
+  scan_b64 text,
+  scan_type text,
+  ocr jsonb,
+  answers jsonb,
+  grade jsonb,
+  status text NOT NULL DEFAULT 'dinilai' CHECK (status IN ('dinilai', 'perlu_cek', 'dikonfirmasi')),
+  hold boolean NOT NULL DEFAULT false,
+  note text,
+  uploaded_by int REFERENCES users (id) ON DELETE SET NULL,
+  edited_by int REFERENCES users (id) ON DELETE SET NULL,
+  edited_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS assessment_sheets_uq ON assessment_sheets (program_id, student_id, week, is_test);
+
+ALTER TABLE assessment_queue ADD COLUMN IF NOT EXISTS is_test boolean NOT NULL DEFAULT false;

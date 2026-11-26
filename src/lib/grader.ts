@@ -1,4 +1,5 @@
 import { parseGrade, type Grade } from "./gradeParse";
+import { assessPrompt, ocrPrompt, parseAssessment, parseOcr, type Assessment, type Key, type Ocr } from "./assess";
 
 const MODEL = process.env.DEEPSEEK_MODEL || "deepseek-flash";
 
@@ -56,4 +57,42 @@ export async function gradeScan(image: Buffer, mediaType: string, title: string 
     console.error("Grader error:", e);
     return { ok: false, error: "Tidak dapat menghubungi layanan penilai." };
   }
+}
+
+/** Panggilan DeepSeek generik (teks saja, atau dengan 1 gambar). Mengembalikan teks balasan. */
+async function ask(content: unknown, max: number): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
+  const key = process.env.DEEPSEEK_API_KEY;
+  if (!key) return { ok: false, error: "Penilaian otomatis belum aktif (DEEPSEEK_API_KEY belum diisi di Vercel)." };
+  try {
+    const res = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+      body: JSON.stringify({ model: MODEL, max_tokens: max, temperature: 0, messages: [{ role: "user", content }] }),
+    });
+    if (!res.ok) {
+      console.error("DeepSeek gagal:", res.status, (await res.text()).slice(0, 300));
+      return { ok: false, error: res.status === 429 ? "Layanan penilai sedang sibuk." : "Layanan penilai gagal merespons." };
+    }
+    const j = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    return { ok: true, text: j.choices?.[0]?.message?.content ?? "" };
+  } catch (e) {
+    console.error("DeepSeek error:", e);
+    return { ok: false, error: "Tidak dapat menghubungi layanan penilai." };
+  }
+}
+
+/** Tahap 1: OCR tulisan tangan -> transkrip (tanpa menilai). */
+export async function transcribeScan(image: Buffer, mediaType: string): Promise<{ ok: true; ocr: Ocr } | { ok: false; error: string }> {
+  const r = await ask([{ type: "image_url", image_url: { url: `data:${mediaType};base64,${image.toString("base64")}`, detail: "high" } }, { type: "text", text: ocrPrompt() }], 2500);
+  if (!r.ok) return r;
+  const ocr = parseOcr(r.text);
+  return ocr ? { ok: true, ocr } : { ok: false, error: "Hasil baca foto tidak dapat dipahami. Coba foto ulang lebih jelas." };
+}
+
+/** Tahap 2: menilai jawaban (teks) terhadap kunci, dengan penyesuaian level murid. Murah, dan dipakai ulang saat guru mengedit. */
+export async function assessAnswers(level: string, title: string, keys: Key[], answers: string[]): Promise<{ ok: true; a: Assessment } | { ok: false; error: string }> {
+  const r = await ask(assessPrompt(level, title, keys, answers), 2500);
+  if (!r.ok) return r;
+  const a = parseAssessment(r.text, answers);
+  return a ? { ok: true, a } : { ok: false, error: "Hasil penilaian tidak dapat dipahami." };
 }

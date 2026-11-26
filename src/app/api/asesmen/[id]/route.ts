@@ -3,6 +3,7 @@ import { programFor, recentDownloads, weekRows, weekSummary, windowOf } from "@/
 import { programRoster } from "@/lib/q";
 import { graderReady } from "@/lib/grader";
 import { releasedWeeks } from "@/lib/schedule";
+import { weekProgress } from "@/lib/sheets";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +23,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const now = Date.now();
   const released = releasedWeeks(p.start_date, p.weeks, now);
   const visible = admin ? p.weeks : released;
-  const [sum, roster, w1] = await Promise.all([weekSummary(p.id), programRoster(p.id), windowOf(p, 1)]);
+  const [sum, roster, w1, prog] = await Promise.all([weekSummary(p.id), programRoster(p.id), windowOf(p, 1), weekProgress(p.id)]);
   const weeks = [];
   for (let w = 1; w <= visible; w++) {
     const win = await windowOf(p, w);
-    weeks.push({ week: w, global: p.week_offset + w, opens: win.opens, closes: win.closes, state: now < win.opens ? "belum" : now <= win.closes ? "buka" : "tutup", graded: sum.get(w) ?? 0 });
+    weeks.push({ week: w, global: p.week_offset + w, opens: win.opens, closes: win.closes, state: now < win.opens ? "belum" : now <= win.closes ? "buka" : "tutup", graded: sum.get(w) ?? 0, complete: prog.get(w)?.complete ?? false, pending: prog.get(w)?.pending ?? 0 });
   }
   const reqW = Number(new URL(req.url).searchParams.get("week"));
   // default: minggu terbaru yang cetaknya sudah dibuka; bila belum ada, minggu 1

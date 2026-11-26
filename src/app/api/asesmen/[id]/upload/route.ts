@@ -59,7 +59,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   }
 
   // Hanya disimpan; pembacaan & penilaian dikerjakan di latar belakang (lib/queue.ts).
-  await enqueue({ programId: p.id, week, studentId, b64: buf.toString("base64"), mediaType: mt, label: String(fd.get("label") || file.name || "scan").slice(0, 120), userId: user.id });
+  await enqueue({ programId: p.id, week, studentId, b64: buf.toString("base64"), mediaType: mt, label: String(fd.get("label") || file.name || "scan").slice(0, 120), userId: user.id, isTest: user.role === "admin" && fd.get("test") === "1" });
   const origin = new URL(req.url).origin;
   after(() => runAndChain(origin));
   return json({ ok: true, queued: true });

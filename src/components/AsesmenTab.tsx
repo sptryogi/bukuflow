@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { saveScore } from "@/app/actions/asesmen";
+import HasilAsesmen from "./HasilAsesmen";
 
 type Row = { student_id: number; nis: string; name: string; level: string; book_id: number | null; title: string | null; has_tpl: boolean; score: number | null; status: string | null };
-type Wk = { week: number; global: number; opens: number; closes: number; state: "belum" | "buka" | "tutup"; graded: number };
+type Wk = { week: number; global: number; opens: number; closes: number; state: "belum" | "buka" | "tutup"; graded: number; complete: boolean; pending: number };
 type Data = {
   now: number; total: number; graderReady: boolean; week: number; rows: Row[]; weeks: Wk[];
   settings: { printDay: number; deadlineHours: number };
@@ -96,8 +97,10 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
   const [q, setQ] = useState("");
   const seq = useRef(0);
   const pollUntil = useRef(0);
+  const [tick, setTick] = useState(0);
   const [qs, setQs] = useState<QS | null>(null);
   const [okMsg, setOkMsg] = useState("");
+  const [test, setTest] = useState(false); // mode uji coba (admin): data tidak masuk rekap nilai
 
   const load = useCallback(async (w?: number | null) => {
     try {
@@ -117,10 +120,10 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
   const loadQ = useCallback(async () => {
     if (!admin || week === null) return;
     try {
-      const r = await fetch(`/api/asesmen/${programId}/queue?week=${week}`, { cache: "no-store" });
+      const r = await fetch(`/api/asesmen/${programId}/queue?week=${week}${test ? "&test=1" : ""}`, { cache: "no-store" });
       if (r.ok) setQs((await r.json()) as QS);
     } catch { /* abaikan, coba lagi pada putaran berikutnya */ }
-  }, [admin, programId, week]);
+  }, [admin, programId, week, test]);
 
   // Segarkan berkala: admin melihat progres antrean; semua pengguna melihat nilai yang masuk setelah unggah.
   useEffect(() => {
@@ -179,6 +182,7 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
           const fd = new FormData();
           fd.set("week", String(week));
           fd.set("label", items[i].name);
+          if (admin && test) fd.set("test", "1");
           fd.set("file", await items[i].get(), "scan.jpg");
           if (studentId) fd.set("student", String(studentId));
           const res = await fetch(`/api/asesmen/${programId}/upload`, { method: "POST", body: fd });
@@ -223,7 +227,7 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
         <h2>1. Cetak · Minggu ke-{cur.global}</h2>
         <p className="muted small">
           {cur.state === "belum" ? <>Dibuka <strong>{wib(cur.opens)}</strong>{admin ? " (admin bisa mengunduh sekarang)." : "."}</> : <>Sudah dibuka sejak {wib(cur.opens)}.</>}{" "}
-          Isi lembar otomatis: NIS, Nama, dan Tanggal. Satu murid satu PDF, dikemas dalam satu ZIP.
+          Isi lembar otomatis: NIS, Nama, Level, dan Tanggal. Satu murid satu PDF, dikemas dalam satu ZIP.
         </p>
         {canPrint ? (
           <div className="row">
@@ -241,6 +245,15 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
           Unggah foto/scan (JPG/PNG) <strong>atau PDF</strong>: satu file per murid, atau <strong>satu PDF berisi banyak halaman</strong> (satu halaman = satu murid). Boleh banyak file sekaligus. Sistem membaca NIS di kertas untuk mencocokkan murid, lalu menilai di latar belakang.{" "}
           {admin ? "Admin tidak dibatasi waktu." : <>Unggah dibuka sampai <strong>{wib(cur.closes)}</strong>.</>}
         </p>
+        {admin && (
+          <div className="notice" style={{ marginBottom: 8 }}>
+            <label style={{ display: "flex", gap: 8, alignItems: "flex-start", cursor: "pointer" }}>
+              <input type="checkbox" checked={test} onChange={(e) => { setTest(e.target.checked); setQs(null); }} style={{ marginTop: 3 }} />
+              <span><strong>Mode uji coba (admin)</strong><br /><span className="small muted">Unggahan dinilai dan membuat folder Asli + Hasil lengkap, tetapi <strong>tidak masuk rekap/riwayat nilai</strong>. Cocok untuk mencoba template dan perubahan.</span></span>
+            </label>
+            {test && <button className="btn sm" style={{ marginTop: 6 }} onClick={async () => { if (!confirm("Hapus semua data uji coba program ini?")) return; await fetch(`/api/asesmen/${programId}/test`, { method: "POST" }); setTick((t) => t + 1); void loadQ(); }}>Hapus data uji</button>}
+          </div>
+        )}
         {!d.graderReady && <div className="notice warn">Penilaian otomatis belum diaktifkan admin. Nilai tetap bisa diisi manual pada tabel di bawah.</div>}
         <label className={`btn ${canUpload && d.graderReady && !busy ? "primary" : ""}`} style={canUpload && d.graderReady ? undefined : { opacity: 0.5, pointerEvents: "none" }}>
           {busy ? "Mengunggah…" : "Pilih foto / scan / PDF"}
@@ -285,16 +298,18 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
                 <ul className="small" style={{ margin: "10px 0 6px", paddingLeft: 18 }}>
                   {qs.failed.slice(0, 10).map((f) => <li key={f.id} style={{ color: "var(--danger)" }}><span className="muted">{f.label ?? `#${f.id}`}</span> · {f.note}</li>)}
                 </ul>
-                <button className="btn sm" onClick={async () => { await fetch(`/api/asesmen/${programId}/queue?week=${week}`, { method: "POST" }); void loadQ(); }}>Proses ulang yang gagal</button>
+                <button className="btn sm" onClick={async () => { await fetch(`/api/asesmen/${programId}/queue?week=${week}${test ? "&test=1" : ""}`, { method: "POST" }); void loadQ(); }}>Proses ulang yang gagal</button>
               </>
             )}
           </div>
         );
       })()}
 
+      <HasilAsesmen programId={programId} week={cur.week} weekGlobal={cur.global} admin={admin} test={test} tick={`${cur.graded}:${qs ? qs.stat.selesai + qs.stat.perlu_cek + qs.stat.gagal : 0}:${tick}`} />
+
       <div className="card">
         <div className="row between" style={{ marginBottom: 8 }}>
-          <h2 style={{ margin: 0 }}>3. Nilai minggu ke-{cur.global} <span className="muted small">({cur.graded}/{d.total} murid)</span></h2>
+          <h2 style={{ margin: 0 }}>4. Rekap nilai minggu ke-{cur.global} <span className="muted small">({cur.graded}/{d.total} murid)</span></h2>
           <input className="input" style={{ maxWidth: 220 }} placeholder="Cari nama / NIS…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="tablewrap">
@@ -333,13 +348,23 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
 
       <div className="card">
         <h2>Riwayat nilai</h2>
-        <p className="muted small">Kolom: NIS, Nama Murid, Level, lalu satu kolom per minggu yang sudah punya nilai. Bertambah otomatis setiap ada nilai baru.</p>
-        {anyScore ? (
+        <p className="muted small">Kolom: NIS, Nama Murid, Level, lalu satu kolom per minggu. Excel/PDF <strong>baru terbuka setelah semua murid pada minggu itu selesai dinilai</strong>, lalu memuat semua minggu yang sudah lengkap. Riwayat minggu-minggu sebelumnya tetap bisa dilihat dan diunduh.</p>
+        <div className="chips" style={{ marginBottom: 8 }}>
+          {d.weeks.filter((x) => x.graded > 0 || x.pending > 0).map((x) => (
+            <span key={x.week} className={`pill ${x.complete ? "ok" : "warn"}`}>Minggu {x.global}: {x.complete ? "lengkap" : `${x.graded}/${d.total} dinilai${x.pending ? ` · ${x.pending} antre` : ""}`}</span>
+          ))}
+        </div>
+        {d.weeks.some((x) => x.complete) ? (
           <div className="row">
             <a className="btn" href={`/download/nilai/${programId}?format=xlsx`}>Excel</a>
             <a className="btn" href={`/download/nilai/${programId}?format=pdf`}>PDF</a>
           </div>
-        ) : <p className="muted small" style={{ margin: 0 }}>Belum ada nilai. Muncul setelah hasil minggu pertama diunggah.</p>}
+        ) : <p className="muted small" style={{ margin: 0 }}>Belum ada minggu yang lengkap.</p>}
+        {admin && anyScore && (
+          <div className="row" style={{ marginTop: 8 }}>
+            <a className="btn sm" href={`/download/nilai/${programId}?format=xlsx&force=1`}>Excel sementara (admin, termasuk minggu belum lengkap)</a>
+          </div>
+        )}
       </div>
 
       {admin && d.downloads && (

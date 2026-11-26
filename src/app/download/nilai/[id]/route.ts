@@ -4,6 +4,7 @@ import { getInstitution, programRoster } from "@/lib/q";
 import { buildResultXlsx } from "@/lib/excel";
 import { buildResultPdf } from "@/lib/pdf";
 import { fmtDate } from "@/lib/schedule";
+import { weekProgress } from "@/lib/sheets";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -20,8 +21,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   if ("error" in got) return new Response(got.error, { status: got.status });
   const { p } = got;
   const [inst, roster, scores] = await Promise.all([getInstitution(p.institution_id), programRoster(p.id), allScores(p.id)]);
-  const weeks = [...new Set([...scores.keys()].map((k) => Number(k.split(":")[1])))].sort((a, b) => a - b);
-  if (!weeks.length) return new Response("Belum ada nilai.", { status: 409 });
+  const prog = await weekProgress(p.id);
+  const force = user.role === "admin" && new URL(req.url).searchParams.get("force") === "1";
+  // Excel hanya memuat minggu yang SEMUA muridnya sudah selesai dinilai (admin boleh memaksa untuk pengecekan).
+  const weeks = [...new Set([...scores.keys()].map((k) => Number(k.split(":")[1])))].filter((w) => force || prog.get(w)?.complete).sort((a, b) => a - b);
+  if (!weeks.length) return new Response("Unduhan nilai terbuka setelah SEMUA murid pada satu minggu selesai dinilai.", { status: 409 });
 
   const grid = {
     weeks: weeks.map((w) => p.week_offset + w),

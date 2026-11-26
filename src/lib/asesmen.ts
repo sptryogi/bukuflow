@@ -58,7 +58,7 @@ export async function logDownload(programId: number, week: number, userId: numbe
   await q().query(`INSERT INTO assessment_downloads (program_id, week, user_id, kind, items) VALUES ($1, $2, $3, $4, $5)`, [programId, week, userId, kind, items]);
 }
 
-export async function saveResult(programId: number, studentId: number, week: number, score: number, status: "dinilai" | "perlu_cek" | "manual", detail: unknown, userId: number): Promise<void> {
+export async function saveResult(programId: number, studentId: number, week: number, score: number, status: "dinilai" | "perlu_cek" | "manual", detail: unknown, userId: number | null): Promise<void> {
   await q().query(
     `INSERT INTO assessment_results (program_id, student_id, week, score, status, detail, uploaded_by, uploaded_at)
      VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, now())

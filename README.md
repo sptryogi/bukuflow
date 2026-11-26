@@ -158,3 +158,12 @@ Pengaturan: Admin → Ringkasan → Pengaturan (hari buka cetak, batas unggah). 
 - Environment Vercel: `DEEPSEEK_API_KEY` (wajib untuk penilaian otomatis), `DEEPSEEK_MODEL` (opsional, default `deepseek-flash`), `CONTACT_TO` (opsional).
 - Stok tambahan/penggantian: Admin → Buku → Stok Asesmen (PDF 1 halaman per judul + rubrik opsional).
 - Foto tidak disimpan (hemat database); hanya nilai dan ringkasan per soal.
+
+## Asesmen: kunci jawaban, folder hasil, mode uji
+- `npm run db:setup` (tabel baru) lalu `npm run db:kunci` memuat kunci 101 judul × 10 soal dari `scripts/kunci/Kunci_Jawaban_101_Asesmen.xlsx` (`-- --dry` untuk cek).
+- Alur: unggah foto/PDF -> antrean -> (1) OCR transkrip -> (2) penilaian teks terhadap kunci, level murid disesuaikan, skor tiap soal hanya 0/5/10 -> tersimpan sebagai lembar (scan asli + transkrip + nilai + evaluasi).
+- Tab Asesmen: "Folder Asli" dan "Hasil Penilaian" per level; tiap murid 4 docx (Transkrip OCR, Jawaban Editable, Penilaian pulpen merah, Evaluasi) + PDF; guru dapat mengoreksi jawaban lalu "Simpan & nilai ulang".
+- Nama berbeda antara kertas dan murid terdaftar: nilai ditahan (belum masuk rekap) sampai guru menekan Konfirmasi.
+- Excel/PDF riwayat nilai hanya memuat minggu yang SEMUA muridnya sudah dinilai (admin: tombol "Excel sementara").
+- Admin: centang "Mode uji coba" di kartu Unggah; hasil uji tidak masuk rekap dan dapat dihapus.
+- Tes dokumen: `npx tsx scripts/test-docs.mts`.

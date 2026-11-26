@@ -2,12 +2,28 @@
 //   npm run db:asesmen            -> muat ke database (DATABASE_URL dari .env.local); aman diulang (menimpa)
 //   npm run db:asesmen -- --dry   -> hanya cek pencocokan judul PDF dengan katalog, tanpa menyentuh database
 // Pencocokan berdasarkan JUDUL (bukan urutan halaman), karena urutan PDF tidak sama dengan urutan katalog.
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { PDFDocument } from "pdf-lib";
 
 const dir = new URL("./asesmen-stock/", import.meta.url);
-const map = JSON.parse(readFileSync(new URL("asesmen-map.json", dir), "utf8"));
-const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+// Semua PDF di folder ini dibaca otomatis: judul tiap halaman diambil dari teks di bagian atas lembar.
+// Jadi nama/jumlah file bebas (mis. stok-1-50.pdf + stok-50-101.pdf); tidak perlu file pemetaan lagi.
+const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+const files = readdirSync(dir).filter((f) => f.toLowerCase().endsWith(".pdf")).sort();
+const map = [];
+for (const file of files) {
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(readFileSync(new URL(file, dir))), verbosity: 0 }).promise;
+  for (let n = 1; n <= doc.numPages; n++) {
+    const pg = await doc.getPage(n);
+    const H = pg.view[3];
+    const items = (await pg.getTextContent()).items.filter((t) => t.str.trim() && H - t.transform[5] > 38 && H - t.transform[5] < 75 && !/^asesmen membaca$/i.test(t.str.trim()));
+    items.sort((a, b) => Math.round(b.transform[5] / 4) - Math.round(a.transform[5] / 4) || a.transform[4] - b.transform[4]);
+    const title = items.map((t) => t.str).join(" ").replace(/\s+/g, " ").trim();
+    if (title) map.push({ file, page: n, title });
+  }
+}
+console.log(`Terbaca ${map.length} halaman dari ${files.length} file PDF.`);
+const norm = (s) => s.toLowerCase().replace(/&/g, " dan ").replace(/[^a-z0-9]+/g, " ").trim();
 // Judul di PDF yang berbeda penulisan dengan katalog.
 const ALIAS = { "terjadinya selat bali": "legenda selat bali" };
 
