@@ -159,7 +159,7 @@ function SheetDetail({ programId, id, onClose, onSaved }: { programId: number; i
 }
 
 export default function HasilAsesmen({ programId, week, weekGlobal, admin, test, tick }: { programId: number; week: number; weekGlobal: number; admin: boolean; test: boolean; tick: string }) {
-  const [view, setView] = useState<"asli" | "hasil">("hasil");
+  const [view, setView] = useState<"asli" | "hasil" | "dua">("hasil");
   const [items, setItems] = useState<Item[] | null>(null);
   const [open, setOpen] = useState<number | null>(null);
   const [level, setLevel] = useState("");
@@ -178,6 +178,73 @@ export default function HasilAsesmen({ programId, week, weekGlobal, admin, test,
   const zip = (kind: string) => `/download/asesmen-hasil/${programId}?${qs}&kind=${kind}${level ? `&level=${level}` : ""}`;
   const openIt = (id: number) => { setOpen(id); setTimeout(() => top.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
 
+  const tq = test ? "&test=1" : "";
+  const file = (sid: number, f: string) => `/download/asesmen-hasil/${programId}?sheet=${sid}&file=${f}${tq}`;
+  const FILES = [["1", "1_Transkrip_Asli_OCR.docx"], ["2", "2_Jawaban_Editable.docx"], ["3", "3_Penilaian.docx"], ["4", "4_Evaluasi.docx"]] as const;
+  const row = { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const, padding: "4px 0" };
+  const sum = { cursor: "pointer", padding: "5px 0", listStyle: "revert" as const };
+
+  // Pohon folder: 📁 Folder Asli > 📁 Level > 📄 Nama.jpg
+  const treeAsli = (
+    <div>
+      <div style={{ fontWeight: 800, marginBottom: 4 }}>📁 Folder Asli</div>
+      <div style={{ paddingLeft: 14, borderLeft: "2px solid var(--line, #e5e7eb)" }}>
+        {LEVELS.map((lv) => {
+          const list = (items ?? []).filter((x) => x.level === lv);
+          return (
+            <details key={lv} open={list.length > 0}>
+              <summary style={sum}><strong>📁 {lv}</strong> <span className="muted small">({list.length})</span></summary>
+              <div style={{ paddingLeft: 14 }}>
+                {list.length === 0 && <div className="muted small">(kosong)</div>}
+                {list.map((it) => (
+                  <div key={it.id} style={row}>
+                    <span style={{ flex: "1 1 160px" }}>📄 {it.name}.jpg <span className="muted small">· {it.nis}</span></span>
+                    <button className="btn sm" onClick={() => openIt(it.id)}>Bandingkan</button>
+                    {it.has_scan && <a className="btn sm" href={file(it.id, "scan")}>Unduh</a>}
+                  </div>
+                ))}
+              </div>
+            </details>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Pohon folder: 📁 Hasil Penilaian > 📁 Level > 📁 Nama > 4 berkas docx (+ PDF)
+  const treeHasil = (
+    <div>
+      <div style={{ fontWeight: 800, marginBottom: 4 }}>📁 Hasil Penilaian</div>
+      <div style={{ paddingLeft: 14, borderLeft: "2px solid var(--line, #e5e7eb)" }}>
+        {LEVELS.map((lv) => {
+          const list = (items ?? []).filter((x) => x.level === lv);
+          return (
+            <details key={lv} open={list.length > 0}>
+              <summary style={sum}><strong>📁 {lv}</strong> <span className="muted small">({list.length})</span></summary>
+              <div style={{ paddingLeft: 14 }}>
+                {list.length === 0 && <div className="muted small">(kosong)</div>}
+                {list.map((it) => (
+                  <details key={it.id}>
+                    <summary style={sum}>
+                      <strong>📁 {it.name}</strong> <span style={{ color: RED, fontWeight: 800 }}>{it.total ?? "-"}/100</span> <StatusPill it={it} />{it.edited && <span className="pill" style={{ marginLeft: 4 }}>Diedit</span>}
+                    </summary>
+                    <div style={{ paddingLeft: 14 }}>
+                      {FILES.map(([n, nm]) => (
+                        <div key={n} style={row}><span style={{ flex: "1 1 200px" }}>📄 {nm}</span><a className="btn sm" href={file(it.id, n)}>Unduh</a></div>
+                      ))}
+                      <div style={row}><span style={{ flex: "1 1 200px" }}>📄 {it.name}.pdf <span className="muted small">(ringkasan)</span></span><a className="btn sm" href={file(it.id, "pdf")}>Unduh</a></div>
+                      <button className="btn sm primary" style={{ margin: "4px 0 8px" }} onClick={() => openIt(it.id)}>Buka / koreksi</button>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </details>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <div className="card" ref={top}>
       <div className="row between" style={{ marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
@@ -185,22 +252,19 @@ export default function HasilAsesmen({ programId, week, weekGlobal, admin, test,
         <div className="chips">
           <button className={`chip ${view === "asli" ? "on" : ""}`} onClick={() => setView("asli")}>📁 Folder Asli</button>
           <button className={`chip ${view === "hasil" ? "on" : ""}`} onClick={() => setView("hasil")}>📁 Hasil Penilaian</button>
+          <button className={`chip ${view === "dua" ? "on" : ""}`} onClick={() => setView("dua")}>⇄ 2 jendela</button>
         </div>
       </div>
       <p className="muted small" style={{ marginTop: 0 }}>
-        {view === "asli" ? "Scan jawaban asli, dikelompokkan per level. Klik “Bandingkan” untuk melihat scan berdampingan dengan hasilnya." : "Tiap murid punya 4 berkas: Transkrip OCR, Jawaban Editable, Penilaian (pulpen merah), dan Evaluasi. Klik “Buka” untuk memeriksa dan mengoreksi."}
+        Folder Asli berisi scan jawaban; folder Hasil Penilaian berisi 4 docx + PDF per murid. “2 jendela” menampilkan keduanya berdampingan (di HP: bertumpuk). Klik <strong>Bandingkan</strong> / <strong>Buka</strong> untuk melihat scan asli bersebelahan dengan transkrip, lalu mengoreksi.
       </p>
 
       <div className="row" style={{ gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
         <select className="input" style={{ width: "auto", minHeight: 34, padding: "2px 8px" }} value={level} onChange={(e) => setLevel(e.target.value)} aria-label="Level untuk unduhan">
           <option value="">Semua level</option>{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
         </select>
-        {view === "asli" ? <a className="btn sm" href={zip("asli")}>Unduh Folder Asli (ZIP)</a> : (
-          <>
-            <a className="btn sm" href={zip("hasil")}>Unduh Hasil (ZIP, docx)</a>
-            <a className="btn sm" href={zip("pdf")}>Unduh PDF per murid (ZIP)</a>
-          </>
-        )}
+        {view !== "hasil" && <a className="btn sm" href={zip("asli")}>Unduh Folder Asli (ZIP)</a>}
+        {view !== "asli" && <><a className="btn sm" href={zip("hasil")}>Unduh Hasil (ZIP, docx)</a><a className="btn sm" href={zip("pdf")}>Unduh PDF per murid (ZIP)</a></>}
         <a className="btn sm" href={zip("semua")}>Semua folder (Asli + Hasil)</a>
       </div>
 
@@ -208,43 +272,12 @@ export default function HasilAsesmen({ programId, week, weekGlobal, admin, test,
 
       {items === null ? <p className="muted">Memuat…</p> : items.length === 0 ? (
         <p className="muted small" style={{ margin: 0 }}>Belum ada lembar yang dinilai untuk minggu ini{test ? " (mode uji)" : ""}. Hasil muncul setelah unggahan selesai diproses.</p>
-      ) : (
-        LEVELS.map((lv) => {
-          const list = items.filter((x) => x.level === lv);
-          if (!list.length) return null;
-          return (
-            <details key={lv} open style={{ marginBottom: 8 }}>
-              <summary style={{ cursor: "pointer", fontWeight: 700, padding: "6px 0" }}>{lv} <span className="muted small">({list.length} murid)</span></summary>
-              <div>
-                {list.map((it) => (
-                  <div key={it.id} className="row between" style={{ gap: 8, flexWrap: "wrap", padding: "8px 0", borderTop: "1px solid var(--line, #eee)", alignItems: "center" }}>
-                    <div style={{ minWidth: 180, flex: "1 1 200px" }}>
-                      <strong>{it.name}</strong> <span className="muted small">· {it.nis}</span>
-                      <div className="small muted">{it.title}</div>
-                    </div>
-                    {view === "hasil" && <div style={{ color: RED, fontWeight: 800, minWidth: 56 }}>{it.total ?? "-"}<span className="small">/100</span></div>}
-                    <div><StatusPill it={it} />{it.edited && <span className="pill" style={{ marginLeft: 4 }}>Diedit</span>}</div>
-                    <div className="row" style={{ gap: 4, flexWrap: "wrap" }}>
-                      {view === "asli" ? (
-                        <>
-                          <button className="btn sm" onClick={() => openIt(it.id)}>Bandingkan</button>
-                          {it.has_scan && <a className="btn sm" href={`/download/asesmen-hasil/${programId}?sheet=${it.id}&file=scan${test ? "&test=1" : ""}`}>Unduh</a>}
-                        </>
-                      ) : (
-                        <>
-                          <button className="btn sm primary" onClick={() => openIt(it.id)}>Buka</button>
-                          {["1", "2", "3", "4"].map((n) => <a key={n} className="btn sm" title={["Transkrip OCR", "Jawaban Editable", "Penilaian", "Evaluasi"][Number(n) - 1]} href={`/download/asesmen-hasil/${programId}?sheet=${it.id}&file=${n}${test ? "&test=1" : ""}`}>{n}</a>)}
-                          <a className="btn sm" href={`/download/asesmen-hasil/${programId}?sheet=${it.id}&file=pdf${test ? "&test=1" : ""}`}>PDF</a>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </details>
-          );
-        })
-      )}
+      ) : view === "dua" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, alignItems: "start" }}>
+          <div>{treeAsli}</div>
+          <div>{treeHasil}</div>
+        </div>
+      ) : view === "asli" ? treeAsli : treeHasil}
     </div>
   );
 }

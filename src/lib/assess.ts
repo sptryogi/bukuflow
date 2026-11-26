@@ -41,8 +41,18 @@ Balas HANYA JSON tanpa teks lain, tepat 10 elemen pada "jawaban" (urut soal 1..1
 
 export function parseOcr(text: string): Ocr | null {
   const j = json(text);
-  if (!j || !Array.isArray(j.jawaban)) return null;
-  const jawaban = Array.from({ length: 10 }, (_, i) => String((j.jawaban as unknown[])[i] ?? "").trim().slice(0, 1500));
+  if (!j) return null;
+  // Terima: ["..."], [{"no":1,"teks":"..."}], atau {"1":"..."}.
+  const raw = j.jawaban ?? j.answers ?? j.soal;
+  const pick = (v: unknown): string => (v && typeof v === "object" ? String((v as Record<string, unknown>).teks ?? (v as Record<string, unknown>).jawaban ?? (v as Record<string, unknown>).text ?? "") : String(v ?? ""));
+  let arr: unknown[];
+  if (Array.isArray(raw)) {
+    const byNo = new Map<number, unknown>();
+    raw.forEach((v, i) => byNo.set(v && typeof v === "object" && Number.isFinite(Number((v as Record<string, unknown>).no)) ? Number((v as Record<string, unknown>).no) : i + 1, v));
+    arr = Array.from({ length: 10 }, (_, i) => byNo.get(i + 1));
+  } else if (raw && typeof raw === "object") arr = Array.from({ length: 10 }, (_, i) => (raw as Record<string, unknown>)[String(i + 1)]);
+  else return null;
+  const jawaban = arr.map((v) => pick(v).trim().slice(0, 1500));
   return { nis: String(j.nis ?? "").trim(), nama: String(j.nama ?? "").trim(), judul: String(j.judul ?? "").trim(), jawaban, perluCek: j.perlu_cek === true, alasan: String(j.alasan ?? "").trim().slice(0, 300) };
 }
 

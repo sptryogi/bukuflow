@@ -67,7 +67,8 @@ async function ask(content: unknown, max: number): Promise<{ ok: true; text: str
     const res = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
-      body: JSON.stringify({ model: MODEL, max_tokens: max, temperature: 0, messages: [{ role: "user", content }] }),
+      // thinking dimatikan: mode berpikir (default aktif) memakai jatah max_tokens sehingga balasan JSON kosong/terpotong.
+      body: JSON.stringify({ model: MODEL, max_tokens: max, temperature: 0, thinking: { type: "disabled" }, messages: [{ role: "user", content }] }),
     });
     if (!res.ok) {
       console.error("DeepSeek gagal:", res.status, (await res.text()).slice(0, 300));
@@ -83,16 +84,18 @@ async function ask(content: unknown, max: number): Promise<{ ok: true; text: str
 
 /** Tahap 1: OCR tulisan tangan -> transkrip (tanpa menilai). */
 export async function transcribeScan(image: Buffer, mediaType: string): Promise<{ ok: true; ocr: Ocr } | { ok: false; error: string }> {
-  const r = await ask([{ type: "image_url", image_url: { url: `data:${mediaType};base64,${image.toString("base64")}`, detail: "high" } }, { type: "text", text: ocrPrompt() }], 2500);
+  const r = await ask([{ type: "image_url", image_url: { url: `data:${mediaType};base64,${image.toString("base64")}`, detail: "high" } }, { type: "text", text: ocrPrompt() }], 4000);
   if (!r.ok) return r;
   const ocr = parseOcr(r.text);
-  return ocr ? { ok: true, ocr } : { ok: false, error: "Hasil baca foto tidak dapat dipahami. Coba foto ulang lebih jelas." };
+  if (!ocr) console.error("OCR tidak terbaca. Balasan model:", r.text.slice(0, 500));
+  return ocr ? { ok: true, ocr } : { ok: false, error: `Hasil baca foto tidak dapat dipahami. Balasan model: "${r.text.replace(/\s+/g, " ").slice(0, 90) || "(kosong)"}"` };
 }
 
 /** Tahap 2: menilai jawaban (teks) terhadap kunci, dengan penyesuaian level murid. Murah, dan dipakai ulang saat guru mengedit. */
 export async function assessAnswers(level: string, title: string, keys: Key[], answers: string[]): Promise<{ ok: true; a: Assessment } | { ok: false; error: string }> {
-  const r = await ask(assessPrompt(level, title, keys, answers), 2500);
+  const r = await ask(assessPrompt(level, title, keys, answers), 4000);
   if (!r.ok) return r;
   const a = parseAssessment(r.text, answers);
-  return a ? { ok: true, a } : { ok: false, error: "Hasil penilaian tidak dapat dipahami." };
+  if (!a) console.error("Penilaian tidak terbaca. Balasan model:", r.text.slice(0, 500));
+  return a ? { ok: true, a } : { ok: false, error: `Hasil penilaian tidak dapat dipahami. Balasan model: "${r.text.replace(/\s+/g, " ").slice(0, 90) || "(kosong)"}"` };
 }
