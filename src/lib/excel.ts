@@ -108,6 +108,7 @@ export type GridInput = {
   weeks: number[]; // nomor minggu global yang ditampilkan
   students: { id: number; nis: string; name: string; level: string }[];
   title: (studentId: number, globalWeek: number) => string;
+  avg?: (studentId: number) => string; // bila ada: kolom "Rata-rata" (rekap akhir)
 };
 
 export async function buildResultXlsx(g: GridInput, opt: { sheet?: string; numeric?: boolean; weekWidth?: number } = {}): Promise<Buffer> {
@@ -117,6 +118,7 @@ export async function buildResultXlsx(g: GridInput, opt: { sheet?: string; numer
     { header: "NIS", key: "nis", width: 16 },
     { header: "Nama Murid", key: "name", width: 30 },
     { header: "Level", key: "level", width: 12 },
+    ...(g.avg ? [{ header: "Rata-rata", key: "avg", width: 12 }] : []),
     ...g.weeks.map((w) => ({ header: `Minggu ke-${w}`, key: `w${w}`, width: opt.weekWidth ?? 34 })),
   ];
   const head = ws.getRow(1);
@@ -124,6 +126,7 @@ export async function buildResultXlsx(g: GridInput, opt: { sheet?: string; numer
   head.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0F766E" } };
   for (const s of g.students) {
     const row: Record<string, string | number> = { nis: s.nis, name: s.name, level: s.level };
+    if (g.avg) { const a = g.avg(s.id); row.avg = a === "" ? "" : Number(a); }
     for (const w of g.weeks) {
       const t = g.title(s.id, w);
       row[`w${w}`] = opt.numeric && t !== "" ? Number(t) : t;

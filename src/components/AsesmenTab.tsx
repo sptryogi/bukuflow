@@ -7,7 +7,7 @@ import HasilAsesmen from "./HasilAsesmen";
 type Row = { student_id: number; nis: string; name: string; level: string; book_id: number | null; title: string | null; has_tpl: boolean; score: number | null; status: string | null };
 type Wk = { week: number; global: number; opens: number; closes: number; state: "belum" | "buka" | "tutup"; graded: number; complete: boolean; pending: number };
 type Data = {
-  now: number; total: number; graderReady: boolean; week: number; rows: Row[]; weeks: Wk[];
+  now: number; total: number; totalWeeks: number; graderReady: boolean; week: number; rows: Row[]; weeks: Wk[];
   settings: { printDay: number; deadlineHours: number };
   downloads: { week: number; kind: string; items: number; at: string; who: string | null }[] | null;
 };
@@ -347,23 +347,31 @@ export default function AsesmenTab({ programId, admin }: { programId: number; ad
       </div>
 
       <div className="card">
-        <h2>Riwayat nilai</h2>
-        <p className="muted small">Kolom: NIS, Nama Murid, Level, lalu satu kolom per minggu. Excel/PDF <strong>baru terbuka setelah semua murid pada minggu itu selesai dinilai</strong>, lalu memuat semua minggu yang sudah lengkap. Riwayat minggu-minggu sebelumnya tetap bisa dilihat dan diunduh.</p>
-        <div className="chips" style={{ marginBottom: 8 }}>
-          {d.weeks.filter((x) => x.graded > 0 || x.pending > 0).map((x) => (
-            <span key={x.week} className={`pill ${x.complete ? "ok" : "warn"}`}>Minggu {x.global}: {x.complete ? "lengkap" : `${x.graded}/${d.total} dinilai${x.pending ? ` · ${x.pending} antre` : ""}`}</span>
-          ))}
-        </div>
-        {d.weeks.some((x) => x.complete) ? (
-          <div className="row">
-            <a className="btn" href={`/download/nilai/${programId}?format=xlsx`}>Excel</a>
-            <a className="btn" href={`/download/nilai/${programId}?format=pdf`}>PDF</a>
-          </div>
-        ) : <p className="muted small" style={{ margin: 0 }}>Belum ada minggu yang lengkap.</p>}
-        {admin && anyScore && (
-          <div className="row" style={{ marginTop: 8 }}>
-            <a className="btn sm" href={`/download/nilai/${programId}?format=xlsx&force=1`}>Excel sementara (admin, termasuk minggu belum lengkap)</a>
-          </div>
+        <h2>Rekap nilai</h2>
+        <p className="muted small">Kolom: NIS, Nama Murid, Level, lalu nilai tiap minggu. Unduhan <strong>realtime</strong>: nilai yang sudah masuk langsung ikut, walau baru sebagian murid. Rekap yang belum lengkap diberi label <strong>SEMENTARA</strong> pada nama file dan judulnya.</p>
+        {!anyScore ? <p className="muted small" style={{ margin: 0 }}>Belum ada nilai. Muncul setelah hasil minggu pertama masuk.</p> : (
+          <>
+            <div className="tablewrap">
+              <table>
+                <thead><tr><th>Minggu</th><th>Status</th><th>Unduh</th></tr></thead>
+                <tbody>
+                  {d.weeks.filter((x) => x.graded > 0).map((x) => (
+                    <tr key={x.week}>
+                      <td>Minggu ke-{x.global}</td>
+                      <td>{x.complete ? <span className="pill ok">Lengkap</span> : <span className="pill warn">Sementara · {x.graded}/{d.total}{x.pending ? ` · ${x.pending} antre` : ""}</span>}</td>
+                      <td className="nowrap"><a className="btn sm" href={`/download/nilai/${programId}?week=${x.week}&format=xlsx`}>Excel</a> <a className="btn sm" href={`/download/nilai/${programId}?week=${x.week}&format=pdf`}>PDF</a></td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td><strong>Rekap akhir program</strong></td>
+                    <td>{d.weeks.length === d.totalWeeks && d.weeks.every((x) => x.complete) && d.weeks[d.weeks.length - 1].state === "tutup" ? <span className="pill ok">Final</span> : <span className="pill warn">Sementara · program belum selesai/lengkap</span>}</td>
+                    <td className="nowrap"><a className="btn sm primary" href={`/download/nilai/${programId}?scope=akhir&format=xlsx`}>Excel</a> <a className="btn sm primary" href={`/download/nilai/${programId}?scope=akhir&format=pdf`}>PDF</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="muted small" style={{ marginBottom: 0 }}>Rekap akhir memuat semua minggu plus kolom <strong>Rata-rata</strong> per murid. Riwayat minggu-minggu sebelumnya tetap tersimpan dan bisa diunduh kapan saja.</p>
+          </>
         )}
       </div>
 

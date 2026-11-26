@@ -36,6 +36,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const rows = visible >= 1 ? await weekRows(p.id, week) : [];
   return Response.json({
     now,
+    totalWeeks: p.weeks,
     total: roster.length,
     graderReady: graderReady(),
     settings: w1.settings,

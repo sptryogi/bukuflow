@@ -17,7 +17,7 @@ export async function buildResultPdf(g: GridInput, heading: string, sub: string)
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const W = 842, H = 595, M = 32, RH = 17, PER = 4;
-  const fixed = [64, 150, 46];
+  const fixed = g.avg ? [64, 150, 46, 52] : [64, 150, 46];
   const weekW = (W - 2 * M - fixed.reduce((a, b) => a + b, 0)) / PER;
 
   const chunks: number[][] = [];
@@ -32,7 +32,7 @@ export async function buildResultPdf(g: GridInput, heading: string, sub: string)
     y -= 40;
     page.drawRectangle({ x: M, y: y - 4, width: W - 2 * M, height: RH, color: rgb(0.88, 0.95, 0.94) });
     let x = M + 3;
-    ["NIS", "Nama Murid", "Level"].forEach((t, i) => {
+    (g.avg ? ["NIS", "Nama Murid", "Level", "Rata-rata"] : ["NIS", "Nama Murid", "Level"]).forEach((t, i) => {
       page.drawText(t, { x, y, size: 8.5, font: bold });
       x += fixed[i];
     });
@@ -57,7 +57,7 @@ export async function buildResultPdf(g: GridInput, heading: string, sub: string)
       }
       if (idx % 2 === 1) page.drawRectangle({ x: M, y: y - 4, width: W - 2 * M, height: RH, color: rgb(0.97, 0.98, 0.98) });
       let x = M + 3;
-      [s.nis, s.name, s.level].forEach((t, i) => {
+      (g.avg ? [s.nis, s.name, s.level, g.avg(s.id) || "-"] : [s.nis, s.name, s.level]).forEach((t, i) => {
         page.drawText(fit(font, t, 8, fixed[i] - 6), { x, y, size: 8, font });
         x += fixed[i];
       });

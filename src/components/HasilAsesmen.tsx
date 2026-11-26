@@ -163,6 +163,7 @@ export default function HasilAsesmen({ programId, week, weekGlobal, admin, test,
   const [items, setItems] = useState<Item[] | null>(null);
   const [open, setOpen] = useState<number | null>(null);
   const [level, setLevel] = useState("");
+  const [full, setFull] = useState(false); // layar penuh (overlay CSS: jalan juga di HP/iOS)
   const top = useRef<HTMLDivElement>(null);
   const qs = `week=${week}${test ? "&test=1" : ""}`;
 
@@ -174,6 +175,15 @@ export default function HasilAsesmen({ programId, week, weekGlobal, admin, test,
   }, [programId, qs]);
   useEffect(() => { void load(); }, [load, tick]);
   useEffect(() => { setOpen(null); }, [week, test]);
+  useEffect(() => { if (view !== "dua") setFull(false); }, [view]);
+  useEffect(() => {
+    if (!full) return;
+    const k = (e: KeyboardEvent) => e.key === "Escape" && setFull(false);
+    window.addEventListener("keydown", k);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", k); document.body.style.overflow = prev; };
+  }, [full]);
 
   const zip = (kind: string) => `/download/asesmen-hasil/${programId}?${qs}&kind=${kind}${level ? `&level=${level}` : ""}`;
   const openIt = (id: number) => { setOpen(id); setTimeout(() => top.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
@@ -246,13 +256,14 @@ export default function HasilAsesmen({ programId, week, weekGlobal, admin, test,
   );
 
   return (
-    <div className="card" ref={top}>
+    <div className="card" ref={top} style={full ? { position: "fixed", inset: 0, zIndex: 1000, overflow: "auto", borderRadius: 0, margin: 0, padding: 16, background: "var(--surface, #fff)", maxWidth: "none" } : undefined}>
       <div className="row between" style={{ marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
         <h2 style={{ margin: 0 }}>3. Hasil per murid · Minggu ke-{weekGlobal}{test ? " · UJI COBA" : ""}</h2>
         <div className="chips">
           <button className={`chip ${view === "asli" ? "on" : ""}`} onClick={() => setView("asli")}>📁 Folder Asli</button>
           <button className={`chip ${view === "hasil" ? "on" : ""}`} onClick={() => setView("hasil")}>📁 Hasil Penilaian</button>
           <button className={`chip ${view === "dua" ? "on" : ""}`} onClick={() => setView("dua")}>⇄ 2 jendela</button>
+          {view === "dua" && <button className="chip" onClick={() => setFull((f) => !f)}>{full ? "✕ Tutup layar penuh (Esc)" : "⛶ Layar penuh"}</button>}
         </div>
       </div>
       <p className="muted small" style={{ marginTop: 0 }}>
